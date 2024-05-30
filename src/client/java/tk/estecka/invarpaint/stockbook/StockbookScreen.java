@@ -5,15 +5,13 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerInventory;
@@ -24,7 +22,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
 import net.minecraft.util.math.MathHelper;
-import tk.estecka.invarpaint.PaintStackUtil;
+import tk.estecka.invarpaint.core.PaintStackUtil;
 
 
 @Environment(EnvType.CLIENT)
@@ -49,7 +47,7 @@ extends HandledScreen<AStockbookHandler>
 	static private final int PREVIEW_SIZE = 123;
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
-	static private final int SEARCH_X=32, SEARCH_Y=17, SEARCH_W=111, SEARCH_H=10;
+	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
 
 	protected final StockbookClientHandler handler;
 
@@ -240,7 +238,7 @@ extends HandledScreen<AStockbookHandler>
 /******************************************************************************/
 
 	@Override
-	public void render(MatrixStack matrices, int mouseX, int mouseY, float delta){
+	public void render(DrawContext context, int mouseX, int mouseY, float delta){
 		if (this.knownSlots != handler.bookSlots.size()){
 			this.knownSlots = handler.bookSlots.size();
 			this.UpdateSearchResults();
@@ -249,37 +247,35 @@ extends HandledScreen<AStockbookHandler>
 		if (handler.requestedFocus != null && this.ScrollTo(handler.requestedFocus))
 			handler.requestedFocus = null;
 
-		super.renderBackground(matrices);
-		super.render(matrices, mouseX, mouseY, delta);
-		super.drawMouseoverTooltip(matrices, mouseX, mouseY);
+		super.renderBackground(context, mouseX, mouseY, delta);
+		super.render(context, mouseX, mouseY, delta);
+		super.drawMouseoverTooltip(context, mouseX, mouseY);
 	}
 
 	@Override
-	protected void drawBackground(MatrixStack matrices, float delta, int mouseX, int mouseY){
-		RenderSystem.setShaderTexture(0, BACKGROUND);
-		HandledScreen.drawTexture(matrices, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight, this.backgroundWidth, this.backgroundHeight);
-		this.RenderScrollbar(matrices);
+	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
+		context.drawTexture(BACKGROUND, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight, this.backgroundWidth, this.backgroundHeight);
+		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
 		if  (slot.isEnabled() && slot != highlighted)
-			this.DrawSlotBackground(matrices, slot, delta);
+			this.DrawSlotBackground(context, slot, delta);
 
 		if (this.highlighted != null)
-			this.DrawSlotBackground(matrices, highlighted, delta);
+			this.DrawSlotBackground(context, highlighted, delta);
 	}
 
 	// Intentionally skips title draw from super.
 	@Override
-	protected void drawForeground(MatrixStack matrices, int mouseX, int moueY){
+	protected void drawForeground(DrawContext context, int mouseX, int moueY){
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			RenderSystem.setShaderTexture(0, STOCK_SLOT);
-			DrawableHelper.drawTexture(matrices, slot.x-2, slot.y-2, 233, 0,0, 20,20, 20,20);
+			context.drawTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 0,0, 20,20, 20,20);
 		}
 	}
 
-	private void DrawSlotBackground(MatrixStack matrices, Slot slot, float delta){
+	private void DrawSlotBackground(DrawContext context, Slot slot, float delta){
 		if (!slot.hasStack())
 			return;
 
@@ -298,29 +294,32 @@ extends HandledScreen<AStockbookHandler>
 				this.highlighted = null;
 		}
 
-		RenderSystem.setShaderTexture(0, FULL_SLOT);
-		DrawableHelper.drawTexture(matrices, drawX, drawY, 0,0, drawSize, drawSize, drawSize, drawSize);
+		context.drawTexture(FULL_SLOT, drawX, drawY, 0,0, drawSize, drawSize, drawSize, drawSize);
 	}
 
 	@Override
-	protected void	renderTooltip(MatrixStack matrices, ItemStack stack, int mouseX, int mouseY){
+	protected void	drawMouseoverTooltip(DrawContext context, int mouseX, int mouseY){
 		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE)) {
 			mouseX = this.x;
 			mouseY += 16+12;
 		}
-		super.renderTooltip(matrices, stack, mouseX, mouseY);
+		super.drawMouseoverTooltip(context, mouseX, mouseY);
+	}
 
+	@Override
+	protected List<Text> getTooltipFromItem(ItemStack stack) {
 		String variantName = PaintStackUtil.GetVariantId(stack);
 		if (variantName != null)
 			this.preview.SetVariant(Registries.PAINTING_VARIANT.getOrEmpty(Identifier.tryParse(variantName)).orElse(null));
+
+		return super.getTooltipFromItem(stack);
 	}
 
-	private void	RenderScrollbar(MatrixStack matrices){
+	private void	RenderScrollbar(DrawContext context){
 		if (linesScrolledMax == 0)
 			return;
 
-		RenderSystem.setShaderTexture(0, SCROLLBAR);
-		DrawableHelper.drawTexture(matrices, scrollbar.getX(), scrollbar.getY(), 0,0, scrollbar.getWidth(),scrollbar.getHeight(), scrollbar.getWidth(),scrollbar.getHeight());
+		context.drawTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), 0,0, scrollbar.getWidth(),scrollbar.getHeight(), scrollbar.getWidth(),scrollbar.getHeight());
 	}
 
 
@@ -354,8 +353,8 @@ extends HandledScreen<AStockbookHandler>
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-		this.linesScrolled -= (int)amount;
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+		this.linesScrolled -= (int)verticalAmount;
 		this.UpdateScrollbar();
 		return true;
 	}

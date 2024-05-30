@@ -12,7 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.util.Identifier;
-import tk.estecka.invarpaint.PaintStackUtil;
+import tk.estecka.invarpaint.core.PaintStackUtil;
 
 
 public class StockbookInventory
@@ -193,7 +193,7 @@ implements Inventory
 
 	@Override
 	public void markDirty(){
-		StockbookItem.SetContent(this.container, this.content);
+		this.container.set(VariantCollectionComponent.TYPE, new VariantCollectionComponent(this.content));
 		if (handler != null)
 			handler.onContentChanged(this);
 	}
@@ -232,10 +232,10 @@ implements Inventory
 		this.content.clear();
 		this.layout.clear();
 
-		var neoContent = StockbookItem.GetContent(this.container);
+		var neoContent = this.container.get(VariantCollectionComponent.TYPE);
 		if  (neoContent != null)
-		for (var entry : neoContent.object2IntEntrySet())
-			this.SetStack(entry.getKey(), entry.getIntValue());
+		for (var entry : neoContent.content.entrySet())
+			this.SetStack(entry.getKey(), entry.getValue());
 	}
 
 	public class GhostView

@@ -1,10 +1,9 @@
 package tk.estecka.invarpaint.stockbook;
 
 import org.jetbrains.annotations.Nullable;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
@@ -14,7 +13,6 @@ import net.minecraft.util.Identifier;
 public class PaintingPreviewWidget
 implements Drawable
 {
-	static private final Identifier PAINTING_ATLAS = new Identifier("textures/atlas/paintings.png");
 	static private final Identifier CHECKER_TEX = new Identifier("invarpaint", "textures/gui/stockbook/checker.png");
 
 	private int menuX, menuY, menuSize;
@@ -33,20 +31,18 @@ implements Drawable
 
 
 	@Override
-	public void render(MatrixStack matrices, int mouseX, int mouseY, float delta){
+	public void render(DrawContext context, int mouseX, int mouseY, float delta){
 		if (this.sprite == null)
 			return;
 
 		// Uses real pixel coordinates to increase precision.
 		final float guiScale = (float)(1f/MinecraftClient.getInstance().getWindow().getScaleFactor());
+		final MatrixStack matrices = context.getMatrices();
 		matrices.push();
 		matrices.scale(guiScale, guiScale, 1);
 
-		RenderSystem.setShaderTexture(0, CHECKER_TEX);
-		DrawableHelper.drawTexture(matrices, checkerX,checkerY, checkerW,checkerH, +0.5f,+0.5f, tilesHorizontal,tilesVertical, 2,2);
-
-		RenderSystem.setShaderTexture(0, PAINTING_ATLAS);
-		DrawableHelper.drawSprite(matrices, paintX,paintY, 0, paintW,paintH, sprite);
+		context.drawTexture(CHECKER_TEX, checkerX,checkerY, checkerW,checkerH, +0.5f,+0.5f, tilesHorizontal,tilesVertical, 2,2);
+		context.drawSprite(paintX,paintY, 0, paintW,paintH, sprite);
 
 		matrices.pop();
 	}

@@ -9,7 +9,7 @@ import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import tk.estecka.invarpaint.PaintStackUtil;
+import tk.estecka.invarpaint.core.PaintStackUtil;
 
 public class StockbookServerHandler
 extends AStockbookHandler

@@ -11,6 +11,7 @@ implements ModInitializer
 
 	@Override
 	public void onInitialize() {
+		VariantCollectionComponent.Register();
 		StockbookItem.Register();
 		AStockbookHandler.Register();
 	}

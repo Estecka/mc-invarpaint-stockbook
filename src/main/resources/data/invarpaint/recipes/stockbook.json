@@ -11,6 +11,6 @@
 		"###",
 		"~~~"
 	],
-	"result": { "item": "invarpaint:stockbook" },
+	"result": { "id": "invarpaint:stockbook" },
 	"show_notification": true
 }

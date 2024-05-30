@@ -4,7 +4,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
-import static tk.estecka.invarpaint.PaintStackUtil.HasVariantId;
+import static tk.estecka.invarpaint.core.PaintStackUtil.HasVariantId;
 
 public class StockbookSlot
 extends MovableSlot
