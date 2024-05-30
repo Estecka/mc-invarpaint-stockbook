@@ -53,10 +53,6 @@ processResources {
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
-
-	exclude "**/*.xcf"
-	exclude "**/*.psd"
-	exclude "**/*.psb"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -78,6 +74,10 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
+
+	exclude "**/*.xcf"
+	exclude "**/*.psd"
+	exclude "**/*.psb"
 }
 
 // configure the maven publication
