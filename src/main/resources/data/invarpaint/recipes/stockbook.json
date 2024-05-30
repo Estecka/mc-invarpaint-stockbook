@@ -1,0 +1,16 @@
+{
+	"replace": true,
+	"category": "misc",
+	"type": "minecraft:crafting_shaped",
+	"key": {
+		"~": { "item": "minecraft:leather" },
+		"#": { "item": "minecraft:painting" }
+	},
+	"pattern": [
+		"~~~",
+		"###",
+		"~~~"
+	],
+	"result": { "item": "invarpaint:stockbook" },
+	"show_notification": true
+}

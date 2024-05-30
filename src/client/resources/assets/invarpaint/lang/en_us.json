@@ -1,0 +1,5 @@
+{
+	"item.invarpaint.stockbook": "Painting Stockbook",
+	"item.invarpaint.stockbook.name.complete": "Complete collection",
+	"item.invarpaint.stockbook.tooltip.content": "Paintings: %s/%s"
+}

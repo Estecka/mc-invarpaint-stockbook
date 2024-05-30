@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "invarpaint-stockbook",
+	"version": "${version}",
+	"name": "Collector's Stockbook",
+	"description": "Keep your painting collection neatly packed in a single stack.",
+	"authors": [
+		"Estecka"
+	],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/invariable-paintings-stockbook",
+		"sources": "https://github.com/Estecka/mc-invarpaint-stockbook"
+	},
+	"license": "GNU AGPLv3",
+	"icon": "assets/invarpaint/icon.stockbook.png",
+	"environment": "*",
+	"custom": {
+		"modmenu":{
+			"parent": "invariablepaintings"
+		}
+	},
+
+	"entrypoints": {
+		"main": [
+			"tk.estecka.invarpaint.stockbook.InvarpaintStockbookMod"
+		],
+		"client": [
+			"tk.estecka.invarpaint.stockbook.InvarpaintStockbookClient"
+		]
+	},
+	"mixins": [
+		"invarpaint-stockbook.mixins.json"
+	],
+	"depends": {
+		"invariablepaintings": "^1.4",
+		"minecraft": "1.19.4",
+		"fabricloader": ">=0.15.7",
+		"java": ">=17",
+		"fabric-api": "*"
+	}
+}
