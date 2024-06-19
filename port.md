@@ -3,4 +3,10 @@
 Initial development
 
 ### 1.20.5
-Current master
+Initial Release
+
+### 1.21.0
+- The painting registry can no longer be accessed statically.
+- `PaintingVariant` now measures its size in blocks.
+- `DataComponentType` was renamed to ComponentType. (Yarn Mappings only ?)
+- `TooltipType` was moved to another package.
