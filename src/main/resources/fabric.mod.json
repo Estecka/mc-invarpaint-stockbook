@@ -32,10 +32,10 @@
 		"invarpaint-stockbook.mixins.json"
 	],
 	"depends": {
-		"invariablepaintings": "^2.0",
-		"minecraft": ">=1.20.5 <1.21",
-		"fabricloader": ">=0.15.7",
-		"java": ">=21",
-		"fabric-api": "*"
+		"invariablepaintings": "^2.1",
+		"minecraft": "~1.21",
+		"fabricloader": ">=0.15.11",
+		"fabric-api": "*",
+		"java": ">=21"
 	}
 }

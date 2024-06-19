@@ -16,7 +16,8 @@ import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -29,10 +30,10 @@ import tk.estecka.invarpaint.core.PaintStackUtil;
 public class StockbookScreen
 extends HandledScreen<AStockbookHandler>
 {
-	static private final Identifier BACKGROUND = new Identifier("invarpaint", "textures/gui/stockbook/background.png");
-	static private final Identifier FULL_SLOT  = new Identifier("invarpaint", "textures/gui/stockbook/full_slot.png" );
-	static private final Identifier STOCK_SLOT = new Identifier("invarpaint", "textures/gui/stockbook/stock.png"     );
-	static private final Identifier SCROLLBAR  = new Identifier("invarpaint", "textures/gui/stockbook/scrollbar.png" );
+	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "textures/gui/stockbook/background.png");
+	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "textures/gui/stockbook/full_slot.png" );
+	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "textures/gui/stockbook/stock.png"     );
+	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "textures/gui/stockbook/scrollbar.png" );
 
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
@@ -50,6 +51,7 @@ extends HandledScreen<AStockbookHandler>
 	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
 
 	protected final StockbookClientHandler handler;
+	protected final Registry<PaintingVariant> paintingRegistry;
 
 	// Widgets
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
@@ -81,6 +83,7 @@ extends HandledScreen<AStockbookHandler>
 	}
 	private StockbookScreen(AStockbookHandler handler, PlayerInventory player, Text title){
 		super(handler, player, title);
+		this.paintingRegistry = player.player.getWorld().getRegistryManager().get(RegistryKeys.PAINTING_VARIANT);
 		if (handler instanceof StockbookClientHandler clientHandler)
 			this.handler = clientHandler;
 		else
@@ -138,7 +141,7 @@ extends HandledScreen<AStockbookHandler>
 
 			final Language lang = Language.getInstance();
 			final Identifier id = slot.GetVariant();
-			final PaintingVariant variant = Registries.PAINTING_VARIANT.getOrEmpty(id).orElse(null);
+			final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
 
 			String name=null, author=null;
 			if (id != null){
@@ -148,7 +151,7 @@ extends HandledScreen<AStockbookHandler>
 
 			String size="0x0";
 			if (variant != null)
-				size = String.format("%dx%d", variant.getWidth()/16, variant.getHeight()/16);
+				size = String.format("%dx%d", variant.width(), variant.height());
 
 			String query = searchBox.getText().toLowerCase().trim();
 			if (id.toString().contains(query)
@@ -228,7 +231,7 @@ extends HandledScreen<AStockbookHandler>
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
 		this.UpdateScrollbar();
 
-		this.preview.SetVariant(Registries.PAINTING_VARIANT.getOrEmpty(variantId).orElse(null));
+		this.preview.SetVariant(paintingRegistry.getOrEmpty(variantId).orElse(null));
 		return true;
 	}
 
@@ -308,9 +311,9 @@ extends HandledScreen<AStockbookHandler>
 
 	@Override
 	protected List<Text> getTooltipFromItem(ItemStack stack) {
-		String variantName = PaintStackUtil.GetVariantId(stack);
+		String variantName = PaintStackUtil.GetVariantName(stack);
 		if (variantName != null)
-			this.preview.SetVariant(Registries.PAINTING_VARIANT.getOrEmpty(Identifier.tryParse(variantName)).orElse(null));
+			this.preview.SetVariant(paintingRegistry.getOrEmpty(Identifier.tryParse(variantName)).orElse(null));
 
 		return super.getTooltipFromItem(stack);
 	}

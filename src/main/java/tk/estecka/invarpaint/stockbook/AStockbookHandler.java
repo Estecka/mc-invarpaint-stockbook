@@ -17,7 +17,7 @@ import net.minecraft.util.Identifier;
 public abstract class AStockbookHandler
 extends ScreenHandler
 {
-	static public final Identifier ID = new Identifier("invarpaint", "stockbook_handler");
+	static public final Identifier ID = Identifier.of("invarpaint", "stockbook_handler");
 	static ScreenHandlerType.Factory<AStockbookHandler> clientFactory = (syncId,playInv)->{ throw new AssertionError("Not on client"); };
 	static public final ScreenHandlerType<AStockbookHandler> TYPE = new ScreenHandlerType<>((syncId,playInv)->clientFactory.create(syncId,playInv), FeatureFlags.VANILLA_FEATURES);
 	static public void Register(){

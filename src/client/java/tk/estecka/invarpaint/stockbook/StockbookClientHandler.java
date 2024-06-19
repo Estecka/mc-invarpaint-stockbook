@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 
 
@@ -32,8 +32,9 @@ extends AStockbookHandler
 	 */
 	@Override
 	public MovableSlot getSlot(int index){
+		final var registry = playerInventory.player.getWorld().getRegistryManager().get(RegistryKeys.PAINTING_VARIANT);
 		int reqSize = index + 1;
-		int max = this.playerEndIndex + 2*Registries.PAINTING_VARIANT.size();
+		int max = this.playerEndIndex + 2*registry.size();
 		if (max < reqSize && this.slots.size() <= max)
 			InvarpaintStockbookMod.LOGGER.warn("Stockbook exceeded the expected maximum size of {} by {} ", max, reqSize-max);
 

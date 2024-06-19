@@ -47,7 +47,7 @@ implements Inventory
 	static public @Nullable Identifier Reduce(ItemStack stack){
 		Identifier id = null;
 
-		String rawVariant = PaintStackUtil.GetVariantId(stack);
+		String rawVariant = PaintStackUtil.GetVariantName(stack);
 		if (stack.isOf(Items.PAINTING) && rawVariant!=null)
 			id = Identifier.tryParse(rawVariant);
 

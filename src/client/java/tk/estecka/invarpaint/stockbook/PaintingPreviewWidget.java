@@ -13,7 +13,7 @@ import net.minecraft.util.Identifier;
 public class PaintingPreviewWidget
 implements Drawable
 {
-	static private final Identifier CHECKER_TEX = new Identifier("invarpaint", "textures/gui/stockbook/checker.png");
+	static private final Identifier CHECKER_TEX = Identifier.of("invarpaint", "textures/gui/stockbook/checker.png");
 
 	private int menuX, menuY, menuSize;
 	private int pixelX, pixelY, pixelSize;
@@ -55,9 +55,8 @@ implements Drawable
 
 		this.sprite = MinecraftClient.getInstance().getPaintingManager().getPaintingSprite(this.variant);
 
-		int varW = variant.getWidth()  / 16;
-		int varH = variant.getHeight() / 16;
-
+		int varW = variant.width();
+		int varH = variant.height();
 		this.tilesHorizontal = varW + 1;
 		this.tilesVertical   = varH + 1;
 		int maxTiles = Math.max(tilesHorizontal, tilesVertical);
