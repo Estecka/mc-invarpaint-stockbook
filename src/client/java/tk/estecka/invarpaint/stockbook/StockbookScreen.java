@@ -252,7 +252,7 @@ extends HandledScreen<AStockbookHandler>
 
 		super.renderBackground(context, mouseX, mouseY, delta);
 		super.render(context, mouseX, mouseY, delta);
-		super.drawMouseoverTooltip(context, mouseX, mouseY);
+		this.drawMouseoverTooltip(context, mouseX, mouseY);
 	}
 
 	@Override

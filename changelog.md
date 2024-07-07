@@ -5,3 +5,5 @@
 - Removed image sources from jar
 ### 1.0.2
 - Updated for MC 1.21
+### 1.0.3
+- Fixed tooltip position in the stockbook not being adjusted to the left.
