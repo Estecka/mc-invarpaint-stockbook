@@ -10,10 +10,6 @@ implements TooltipPositioner
 {
 	public int rightBound;
 
-	public BoundedToolipPositioner(int rightBound){
-		this.rightBound = rightBound;
-	}
-
 	public Vector2ic getPosition(int screenWidth, int screenHeight, int mouseX, int mouseY, int tipWidth, int tipHeight){
 		Vector2i pos = new Vector2i(mouseX+16, mouseY+16);
 		int overflow;

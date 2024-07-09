@@ -11,6 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
@@ -49,6 +50,7 @@ extends HandledScreen<AStockbookHandler>
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
 	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
+	static private final int TOOLTIP_RIGHT_BOUND = 179;
 
 	protected final StockbookClientHandler handler;
 	protected final Registry<PaintingVariant> paintingRegistry;
@@ -57,6 +59,7 @@ extends HandledScreen<AStockbookHandler>
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
+	private final BoundedToolipPositioner toolipPositioner = new BoundedToolipPositioner();
 
 	// The amount of slots in the book, the last time the layout was updated.
 	private int knownSlots = 0;
@@ -107,6 +110,8 @@ extends HandledScreen<AStockbookHandler>
 
 		this.preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
 		super.addDrawable(this.preview);
+
+		this.toolipPositioner.rightBound = this.x + TOOLTIP_RIGHT_BOUND;
 
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
@@ -302,11 +307,13 @@ extends HandledScreen<AStockbookHandler>
 
 	@Override
 	protected void	drawMouseoverTooltip(DrawContext context, int mouseX, int mouseY){
-		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE)) {
-			mouseX = this.x;
-			mouseY += 16+12;
-		}
+		var contextpp = IDrawContextDuck.Of(context);
+
+		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE))
+			contextpp.invarpaint$SetTooltipPositioner(this.toolipPositioner);
+
 		super.drawMouseoverTooltip(context, mouseX, mouseY);
+		contextpp.invarpaint$SetTooltipPositioner(HoveredTooltipPositioner.INSTANCE);
 	}
 
 	@Override
