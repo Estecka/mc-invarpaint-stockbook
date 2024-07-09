@@ -1,4 +1,5 @@
 # v1
+## 1.0
 ### 1.0.0
 - Initial Release
 ### 1.0.1
@@ -7,3 +8,6 @@
 - Updated for MC 1.21
 ### 1.0.3
 - Fixed tooltip position in the stockbook not being adjusted to the left.
+
+## 1.1
+- Further improved the tooltip's position in the stockbook.
