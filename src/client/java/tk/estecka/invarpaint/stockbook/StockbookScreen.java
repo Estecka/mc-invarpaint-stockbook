@@ -11,9 +11,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
@@ -40,6 +42,13 @@ implements TooltipPositioner
 	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "stockbook/stock"     );
 	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "stockbook/scrollbar" );
 
+	static private final ButtonTextures FILTER_TEXTURES = new ButtonTextures(
+		Identifier.of("invarpaint", "stockbook/filter_enabled"),
+		Identifier.of("invarpaint", "stockbook/filter_disabled"),
+		Identifier.of("invarpaint", "stockbook/filter_enabled_highlighted"),
+		Identifier.of("invarpaint", "stockbook/filter_disabled_highlighted")
+	);
+
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
 	static public final int GRID_SLOT_COUNT = GRID_W * GRID_H;
@@ -54,6 +63,7 @@ implements TooltipPositioner
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
 	static private final int SEARCH_X=31, SEARCH_Y=15, SEARCH_W=107, SEARCH_H=14;
+	static private final int FILTER_X=139, FILTER_Y=14, FILTER_W=26, FILTER_H=16;
 	static private final int TOOLTIP_X_MIN=10, TOOLTIP_X_MAX=169, TOOLTIP_PADDING=4;
 
 	protected final StockbookClientHandler handler;
@@ -63,6 +73,7 @@ implements TooltipPositioner
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
+	private final SimpleToggleButton filterButton = new SimpleToggleButton(0, 0, FILTER_W, FILTER_H, false, b ->this.UpdateSearchResults());
 
 	// The amount of slots in the book, the last time the layout was updated.
 	private int knownSlots = 0;
@@ -114,6 +125,11 @@ implements TooltipPositioner
 		this.preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
 		super.addDrawable(this.preview);
 
+		this.filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
+		this.filterButton.setTextures(FILTER_TEXTURES);
+		this.filterButton.setTooltip(Tooltip.of(Text.literal("Flibidi")));
+		super.addDrawableChild(filterButton);
+
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
 	}
@@ -139,34 +155,11 @@ implements TooltipPositioner
 	private void UpdateSearchResults(){
 		this.searchResults.clear();
 
-		if (this.searchBox.getText().isBlank())
-			searchResults.addAll(handler.bookSlots);
-		else for (StockbookSlot slot : handler.bookSlots)
+		for (StockbookSlot slot : handler.bookSlots)
 		{
 			slot.SetVisible(false);
-
-			final Language lang = Language.getInstance();
-			final Identifier id = slot.GetVariant();
-			final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
-
-			String name=null, author=null;
-			if (id != null){
-				name   = lang.get(id.toTranslationKey("painting", "title" ), null);
-				author = lang.get(id.toTranslationKey("painting", "author"), null);
-			}
-
-			String size="0x0";
-			if (variant != null)
-				size = String.format("%dx%d", variant.width(), variant.height());
-
-			String query = searchBox.getText().toLowerCase().trim();
-			if (id.toString().contains(query)
-			 || size.contains(query)
-			 || (name   != null && name  .toLowerCase().contains(query))
-			 || (author != null && author.toLowerCase().contains(query))
-			) {
+			if (MatchesSearch(slot))
 				searchResults.add(slot);
-			}
 		}
 
 		this.searchResults.sort((a,b) -> {
@@ -178,6 +171,35 @@ implements TooltipPositioner
 			     ;
 		});
 		this.UpdateScrollability();
+	}
+
+	private boolean MatchesSearch(StockbookSlot slot){
+		if (filterButton.isToggled() && slot.getStack().isEmpty())
+			return false;
+
+		if (searchBox.getText().isBlank())
+			return true;
+
+		final Language lang = Language.getInstance();
+		final Identifier id = slot.GetVariant();
+		final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
+
+		String name=null, author=null;
+		if (id != null){
+			name   = lang.get(id.toTranslationKey("painting", "title" ), null);
+			author = lang.get(id.toTranslationKey("painting", "author"), null);
+		}
+
+		String size="0x0";
+		if (variant != null)
+			size = String.format("%dx%d", variant.width(), variant.height());
+
+		String query = searchBox.getText().toLowerCase().trim();
+		return id.toString().contains(query)
+		    || size.contains(query)
+		    || (name   != null && name  .toLowerCase().contains(query))
+		    || (author != null && author.toLowerCase().contains(query))
+		    ;
 	}
 
 	private void UpdateScrollability(){
