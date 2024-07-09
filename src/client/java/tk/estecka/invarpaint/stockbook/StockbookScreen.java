@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 import org.lwjgl.glfw.GLFW;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -12,6 +14,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
+import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
@@ -30,6 +33,7 @@ import tk.estecka.invarpaint.core.PaintStackUtil;
 @Environment(EnvType.CLIENT)
 public class StockbookScreen
 extends HandledScreen<AStockbookHandler>
+implements TooltipPositioner
 {
 	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "textures/gui/stockbook/background.png");
 	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "textures/gui/stockbook/full_slot.png" );
@@ -50,7 +54,7 @@ extends HandledScreen<AStockbookHandler>
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
 	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
-	static private final int TOOLTIP_RIGHT_BOUND = 179;
+	static private final int TOOLTIP_X_MIN=10, TOOLTIP_X_MAX=169, TOOLTIP_PADDING=4;
 
 	protected final StockbookClientHandler handler;
 	protected final Registry<PaintingVariant> paintingRegistry;
@@ -59,7 +63,6 @@ extends HandledScreen<AStockbookHandler>
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
-	private final BoundedToolipPositioner toolipPositioner = new BoundedToolipPositioner();
 
 	// The amount of slots in the book, the last time the layout was updated.
 	private int knownSlots = 0;
@@ -110,8 +113,6 @@ extends HandledScreen<AStockbookHandler>
 
 		this.preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
 		super.addDrawable(this.preview);
-
-		this.toolipPositioner.rightBound = this.x + TOOLTIP_RIGHT_BOUND;
 
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
@@ -310,10 +311,42 @@ extends HandledScreen<AStockbookHandler>
 		var contextpp = IDrawContextDuck.Of(context);
 
 		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE))
-			contextpp.invarpaint$SetTooltipPositioner(this.toolipPositioner);
+			contextpp.invarpaint$SetTooltipPositioner(this);
 
 		super.drawMouseoverTooltip(context, mouseX, mouseY);
 		contextpp.invarpaint$SetTooltipPositioner(HoveredTooltipPositioner.INSTANCE);
+	}
+
+	// Tooltip Positioner
+	@Override
+	public Vector2ic getPosition(int screenWidth, int screenHeight, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight){
+		Vector2i pos = new Vector2i(
+			this.x + TOOLTIP_X_MIN + TOOLTIP_PADDING,
+			mouseY + 16
+		);
+		int overflow;
+
+		// x
+		overflow = mouseX - (pos.x + tooltipWidth);
+		if (overflow > 0)
+			pos.x += overflow;
+
+		overflow = (pos.x + tooltipWidth) - (this.x + TOOLTIP_X_MAX - TOOLTIP_PADDING);
+		if (overflow > 0)
+			pos.x -= overflow;
+
+		if (pos.x < TOOLTIP_PADDING)
+			pos.x = TOOLTIP_PADDING;
+
+		// y
+		overflow = (pos.y + tooltipHeight) - screenHeight;
+		if (overflow > 0){
+			pos.y -= overflow;
+			if (pos.y < 0)
+				pos.y = 0;
+		}
+
+		return pos;
 	}
 
 	@Override
