@@ -53,7 +53,7 @@ implements TooltipPositioner
 	static private final int PREVIEW_SIZE = 123;
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
-	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
+	static private final int SEARCH_X=31, SEARCH_Y=15, SEARCH_W=107, SEARCH_H=14;
 	static private final int TOOLTIP_X_MIN=10, TOOLTIP_X_MAX=169, TOOLTIP_PADDING=4;
 
 	protected final StockbookClientHandler handler;
