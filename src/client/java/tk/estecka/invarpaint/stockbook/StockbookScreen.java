@@ -35,10 +35,10 @@ public class StockbookScreen
 extends HandledScreen<AStockbookHandler>
 implements TooltipPositioner
 {
-	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "textures/gui/stockbook/background.png");
-	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "textures/gui/stockbook/full_slot.png" );
-	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "textures/gui/stockbook/stock.png"     );
-	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "textures/gui/stockbook/scrollbar.png" );
+	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "stockbook/background");
+	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "stockbook/full_slot" );
+	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "stockbook/stock"     );
+	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "stockbook/scrollbar" );
 
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
@@ -263,7 +263,7 @@ implements TooltipPositioner
 
 	@Override
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
-		context.drawTexture(BACKGROUND, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight, this.backgroundWidth, this.backgroundHeight);
+		context.drawGuiTexture(BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
 		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
@@ -280,7 +280,7 @@ implements TooltipPositioner
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 0,0, 20,20, 20,20);
+			context.drawGuiTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 20, 20);
 		}
 	}
 
@@ -303,7 +303,7 @@ implements TooltipPositioner
 				this.highlighted = null;
 		}
 
-		context.drawTexture(FULL_SLOT, drawX, drawY, 0,0, drawSize, drawSize, drawSize, drawSize);
+		context.drawGuiTexture(FULL_SLOT, drawX, drawY, drawSize, drawSize);
 	}
 
 	@Override
@@ -362,7 +362,7 @@ implements TooltipPositioner
 		if (linesScrolledMax == 0)
 			return;
 
-		context.drawTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), 0,0, scrollbar.getWidth(),scrollbar.getHeight(), scrollbar.getWidth(),scrollbar.getHeight());
+		context.drawGuiTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
 	}
 
 
