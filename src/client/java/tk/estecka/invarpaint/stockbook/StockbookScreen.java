@@ -162,14 +162,7 @@ implements TooltipPositioner
 				searchResults.add(slot);
 		}
 
-		this.searchResults.sort((a,b) -> {
-			Identifier iA=a.GetVariant(), iB=b.GetVariant();
-			return (iA == iB) ? 0
-			     : (iA == null) ? -1
-			     : (iB == null) ? 1
-			     : iA.toString().compareTo(iB.toString())
-			     ;
-		});
+		this.SortSearchResult();
 		this.UpdateScrollability();
 	}
 
@@ -200,6 +193,17 @@ implements TooltipPositioner
 		    || (name   != null && name  .toLowerCase().contains(query))
 		    || (author != null && author.toLowerCase().contains(query))
 		    ;
+	}
+
+	private void SortSearchResult(){
+		this.searchResults.sort((a,b) -> {
+			Identifier iA=a.GetVariant(), iB=b.GetVariant();
+			return (iA == iB)   ?  0
+			     : (iA == null) ? -1
+			     : (iB == null) ? +1
+			     : iA.toString().compareTo(iB.toString())
+			     ;
+		});
 	}
 
 	private void UpdateScrollability(){
@@ -242,22 +246,30 @@ implements TooltipPositioner
 	}
 
 	public boolean ScrollTo(@NotNull Identifier variantId){
+		StockbookSlot slot = null;
 		int index = -1;
 
-		for (int i=0; i<searchResults.size(); ++i)
-		if  (variantId.equals(searchResults.get(i).GetVariant())) {
-			this.highlighted = searchResults.get(i);
-			this.animRemainingTime = ANIM_DURATION_MAX;
-			index = i;
+		for (int i=0; i<handler.bookSlots.size(); ++i)
+		if  (variantId.equals(handler.bookSlots.get(i).GetVariant())) {
+			slot = handler.bookSlots.get(i);
 			break;
 		}
 
-		if (index < 0)
+		if (slot == null)
 			return false;
+
+		if (!searchResults.contains(slot)){
+			searchResults.add(slot);
+			this.SortSearchResult();
+		}
+
+		this.highlighted = slot;
+		this.animRemainingTime = ANIM_DURATION_MAX;
+		index = searchResults.indexOf(slot);
 
 		int line = index / GRID_W;
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
-		this.UpdateScrollbar();
+		this.UpdateScrollability(); 
 
 		this.preview.SetVariant(paintingRegistry.getOrEmpty(variantId).orElse(null));
 		return true;
