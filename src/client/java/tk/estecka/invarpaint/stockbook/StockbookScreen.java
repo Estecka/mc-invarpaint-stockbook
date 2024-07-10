@@ -26,6 +26,7 @@ import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
 import net.minecraft.util.math.MathHelper;
@@ -74,6 +75,14 @@ implements TooltipPositioner
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
 	private final SimpleToggleButton filterButton = new SimpleToggleButton(0, 0, FILTER_W, FILTER_H, false, b ->this.UpdateSearchResults());
+	{
+		searchBox.setPlaceholder(Text.translatable("gui.invarpaint.stockbook.search").formatted(Formatting.ITALIC, Formatting.GRAY));
+		filterButton.setTextures(FILTER_TEXTURES);
+		filterButton.SetToolTips(
+			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.stored")),
+			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.discovered"))
+		);
+	}
 
 	// The amount of slots in the book, the last time the layout was updated.
 	private int knownSlots = 0;
@@ -118,16 +127,14 @@ implements TooltipPositioner
 		this.backgroundHeight = 230;
 		super.init();
 
-		this.searchBox.setX(this.x + SEARCH_X);
-		this.searchBox.setY(this.y + SEARCH_Y);
+		searchBox.setX(this.x + SEARCH_X);
+		searchBox.setY(this.y + SEARCH_Y);
 		super.addDrawableChild(searchBox);
 
-		this.preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
+		preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
 		super.addDrawable(this.preview);
 
-		this.filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
-		this.filterButton.setTextures(FILTER_TEXTURES);
-		this.filterButton.setTooltip(Tooltip.of(Text.literal("Flibidi")));
+		filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
 		super.addDrawableChild(filterButton);
 
 		this.UpdatePlayerSlots();
