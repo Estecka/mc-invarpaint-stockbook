@@ -276,7 +276,7 @@ implements TooltipPositioner
 
 		int line = index / GRID_W;
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
-		this.UpdateScrollability(); 
+		this.UpdateScrollability();
 
 		this.preview.SetVariant(paintingRegistry.getOrEmpty(variantId).orElse(null));
 		return true;
