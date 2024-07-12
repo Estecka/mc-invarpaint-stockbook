@@ -129,13 +129,13 @@ implements TooltipPositioner
 
 		searchBox.setX(this.x + SEARCH_X);
 		searchBox.setY(this.y + SEARCH_Y);
-		super.addDrawableChild(searchBox);
+		this.addDrawableChild(searchBox);
 
 		preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
-		super.addDrawable(this.preview);
+		this.addDrawable(this.preview);
 
 		filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
-		super.addDrawableChild(filterButton);
+		this.addDrawableChild(filterButton);
 
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
@@ -297,7 +297,7 @@ implements TooltipPositioner
 		if (handler.requestedFocus != null && this.ScrollTo(handler.requestedFocus))
 			handler.requestedFocus = null;
 
-		super.renderBackground(context, mouseX, mouseY, delta);
+		this.renderBackground(context, mouseX, mouseY, delta);
 		super.render(context, mouseX, mouseY, delta);
 		this.drawMouseoverTooltip(context, mouseX, mouseY);
 	}
