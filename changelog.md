@@ -13,4 +13,5 @@
 - Further improved the tooltip's position in the stockbook.
 - Added a toggle that hides placeholder slots.
 - Inserting a painting will make its slot visible, even if it doesn't match the current filters.
+- Clicking anywhere on the screen now unfocuses the search bar.
 - Changed resources format to make use of sprite atlases.

@@ -445,6 +445,7 @@ implements TooltipPositioner
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button){
+		this.setFocused(null);
 		if (button==0
 		 && mouseX >= (this.x+RAIL_X)
 		 && mouseX <  (this.x+RAIL_X+RAIL_W)
