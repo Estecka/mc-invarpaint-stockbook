@@ -13,7 +13,7 @@ import net.minecraft.util.Identifier;
 public class PaintingPreviewWidget
 implements Drawable
 {
-	static private final Identifier CHECKER_TEX = Identifier.of("invarpaint", "textures/gui/stockbook/checker.png");
+	static private final Identifier CHECKER_TEX = Identifier.of("invarpaint", "textures/gui/stockbook_checker.png");
 
 	private int menuX, menuY, menuSize;
 	private int pixelX, pixelY, pixelSize;

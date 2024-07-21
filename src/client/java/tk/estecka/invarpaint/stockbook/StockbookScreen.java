@@ -4,13 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 import org.lwjgl.glfw.GLFW;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
+import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
@@ -20,6 +26,7 @@ import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
 import net.minecraft.util.math.MathHelper;
@@ -29,11 +36,19 @@ import tk.estecka.invarpaint.core.PaintStackUtil;
 @Environment(EnvType.CLIENT)
 public class StockbookScreen
 extends HandledScreen<AStockbookHandler>
+implements TooltipPositioner
 {
-	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "textures/gui/stockbook/background.png");
-	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "textures/gui/stockbook/full_slot.png" );
-	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "textures/gui/stockbook/stock.png"     );
-	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "textures/gui/stockbook/scrollbar.png" );
+	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "stockbook/background");
+	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "stockbook/full_slot" );
+	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "stockbook/stock"     );
+	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "stockbook/scrollbar" );
+
+	static private final ButtonTextures FILTER_TEXTURES = new ButtonTextures(
+		Identifier.of("invarpaint", "stockbook/filter_enabled"),
+		Identifier.of("invarpaint", "stockbook/filter_disabled"),
+		Identifier.of("invarpaint", "stockbook/filter_enabled_highlighted"),
+		Identifier.of("invarpaint", "stockbook/filter_disabled_highlighted")
+	);
 
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
@@ -48,7 +63,9 @@ extends HandledScreen<AStockbookHandler>
 	static private final int PREVIEW_SIZE = 123;
 	static private final int SCROLLBAR_MIN_H = 8;
 	static private final int RAIL_X=153, RAIL_Y=32, RAIL_W=12, RAIL_H=101;
-	static private final int SEARCH_X=31, SEARCH_Y=16, SEARCH_W=113, SEARCH_H=12;
+	static private final int SEARCH_X=31, SEARCH_Y=15, SEARCH_W=107, SEARCH_H=14;
+	static private final int FILTER_X=139, FILTER_Y=14, FILTER_W=26, FILTER_H=16;
+	static private final int TOOLTIP_X_MIN=10, TOOLTIP_X_MAX=169, TOOLTIP_PADDING=4;
 
 	protected final StockbookClientHandler handler;
 	protected final Registry<PaintingVariant> paintingRegistry;
@@ -57,6 +74,15 @@ extends HandledScreen<AStockbookHandler>
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
+	private final SimpleToggleButton filterButton = new SimpleToggleButton(0, 0, FILTER_W, FILTER_H, false, b ->this.UpdateSearchResults());
+	{
+		searchBox.setPlaceholder(Text.translatable("gui.invarpaint.stockbook.search").formatted(Formatting.ITALIC, Formatting.GRAY));
+		filterButton.setTextures(FILTER_TEXTURES);
+		filterButton.SetToolTips(
+			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.stored")),
+			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.discovered"))
+		);
+	}
 
 	// The amount of slots in the book, the last time the layout was updated.
 	private int knownSlots = 0;
@@ -101,12 +127,15 @@ extends HandledScreen<AStockbookHandler>
 		this.backgroundHeight = 230;
 		super.init();
 
-		this.searchBox.setX(this.x + SEARCH_X);
-		this.searchBox.setY(this.y + SEARCH_Y);
-		super.addDrawableChild(searchBox);
+		searchBox.setX(this.x + SEARCH_X);
+		searchBox.setY(this.y + SEARCH_Y);
+		this.addDrawableChild(searchBox);
 
-		this.preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
-		super.addDrawable(this.preview);
+		preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
+		this.addDrawable(this.preview);
+
+		filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
+		this.addDrawableChild(filterButton);
 
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
@@ -133,45 +162,55 @@ extends HandledScreen<AStockbookHandler>
 	private void UpdateSearchResults(){
 		this.searchResults.clear();
 
-		if (this.searchBox.getText().isBlank())
-			searchResults.addAll(handler.bookSlots);
-		else for (StockbookSlot slot : handler.bookSlots)
+		for (StockbookSlot slot : handler.bookSlots)
 		{
 			slot.SetVisible(false);
-
-			final Language lang = Language.getInstance();
-			final Identifier id = slot.GetVariant();
-			final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
-
-			String name=null, author=null;
-			if (id != null){
-				name   = lang.get(id.toTranslationKey("painting", "title" ), null);
-				author = lang.get(id.toTranslationKey("painting", "author"), null);
-			}
-
-			String size="0x0";
-			if (variant != null)
-				size = String.format("%dx%d", variant.width(), variant.height());
-
-			String query = searchBox.getText().toLowerCase().trim();
-			if (id.toString().contains(query)
-			 || size.contains(query)
-			 || (name   != null && name  .toLowerCase().contains(query))
-			 || (author != null && author.toLowerCase().contains(query))
-			) {
+			if (MatchesSearch(slot))
 				searchResults.add(slot);
-			}
 		}
 
+		this.SortSearchResult();
+		this.UpdateScrollability();
+	}
+
+	private boolean MatchesSearch(StockbookSlot slot){
+		if (filterButton.isToggled() && slot.getStack().isEmpty())
+			return false;
+
+		if (searchBox.getText().isBlank())
+			return true;
+
+		final Language lang = Language.getInstance();
+		final Identifier id = slot.GetVariant();
+		final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
+
+		String name=null, author=null;
+		if (id != null){
+			name   = lang.get(id.toTranslationKey("painting", "title" ), null);
+			author = lang.get(id.toTranslationKey("painting", "author"), null);
+		}
+
+		String size="0x0";
+		if (variant != null)
+			size = String.format("%dx%d", variant.width(), variant.height());
+
+		String query = searchBox.getText().toLowerCase().trim();
+		return id.toString().contains(query)
+		    || size.contains(query)
+		    || (name   != null && name  .toLowerCase().contains(query))
+		    || (author != null && author.toLowerCase().contains(query))
+		    ;
+	}
+
+	private void SortSearchResult(){
 		this.searchResults.sort((a,b) -> {
 			Identifier iA=a.GetVariant(), iB=b.GetVariant();
-			return (iA == iB) ? 0
+			return (iA == iB)   ?  0
 			     : (iA == null) ? -1
-			     : (iB == null) ? 1
+			     : (iB == null) ? +1
 			     : iA.toString().compareTo(iB.toString())
 			     ;
 		});
-		this.UpdateScrollability();
 	}
 
 	private void UpdateScrollability(){
@@ -214,22 +253,30 @@ extends HandledScreen<AStockbookHandler>
 	}
 
 	public boolean ScrollTo(@NotNull Identifier variantId){
+		StockbookSlot slot = null;
 		int index = -1;
 
-		for (int i=0; i<searchResults.size(); ++i)
-		if  (variantId.equals(searchResults.get(i).GetVariant())) {
-			this.highlighted = searchResults.get(i);
-			this.animRemainingTime = ANIM_DURATION_MAX;
-			index = i;
+		for (int i=0; i<handler.bookSlots.size(); ++i)
+		if  (variantId.equals(handler.bookSlots.get(i).GetVariant())) {
+			slot = handler.bookSlots.get(i);
 			break;
 		}
 
-		if (index < 0)
+		if (slot == null)
 			return false;
+
+		if (!searchResults.contains(slot)){
+			searchResults.add(slot);
+			this.SortSearchResult();
+		}
+
+		this.highlighted = slot;
+		this.animRemainingTime = ANIM_DURATION_MAX;
+		index = searchResults.indexOf(slot);
 
 		int line = index / GRID_W;
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
-		this.UpdateScrollbar();
+		this.UpdateScrollability();
 
 		this.preview.SetVariant(paintingRegistry.getOrEmpty(variantId).orElse(null));
 		return true;
@@ -250,14 +297,14 @@ extends HandledScreen<AStockbookHandler>
 		if (handler.requestedFocus != null && this.ScrollTo(handler.requestedFocus))
 			handler.requestedFocus = null;
 
-		super.renderBackground(context, mouseX, mouseY, delta);
+		this.renderBackground(context, mouseX, mouseY, delta);
 		super.render(context, mouseX, mouseY, delta);
 		this.drawMouseoverTooltip(context, mouseX, mouseY);
 	}
 
 	@Override
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
-		context.drawTexture(BACKGROUND, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight, this.backgroundWidth, this.backgroundHeight);
+		context.drawGuiTexture(BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
 		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
@@ -274,7 +321,7 @@ extends HandledScreen<AStockbookHandler>
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 0,0, 20,20, 20,20);
+			context.drawGuiTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 20, 20);
 		}
 	}
 
@@ -297,16 +344,50 @@ extends HandledScreen<AStockbookHandler>
 				this.highlighted = null;
 		}
 
-		context.drawTexture(FULL_SLOT, drawX, drawY, 0,0, drawSize, drawSize, drawSize, drawSize);
+		context.drawGuiTexture(FULL_SLOT, drawX, drawY, drawSize, drawSize);
 	}
 
 	@Override
 	protected void	drawMouseoverTooltip(DrawContext context, int mouseX, int mouseY){
-		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE)) {
-			mouseX = this.x;
-			mouseY += 16+12;
-		}
+		var contextpp = IDrawContextDuck.Of(context);
+
+		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE))
+			contextpp.invarpaint$SetTooltipPositioner(this);
+
 		super.drawMouseoverTooltip(context, mouseX, mouseY);
+		contextpp.invarpaint$SetTooltipPositioner(HoveredTooltipPositioner.INSTANCE);
+	}
+
+	// Tooltip Positioner
+	@Override
+	public Vector2ic getPosition(int screenWidth, int screenHeight, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight){
+		Vector2i pos = new Vector2i(
+			this.x + TOOLTIP_X_MIN + TOOLTIP_PADDING,
+			mouseY + 16
+		);
+		int overflow;
+
+		// x
+		overflow = mouseX - (pos.x + tooltipWidth);
+		if (overflow > 0)
+			pos.x += overflow;
+
+		overflow = (pos.x + tooltipWidth) - (this.x + TOOLTIP_X_MAX - TOOLTIP_PADDING);
+		if (overflow > 0)
+			pos.x -= overflow;
+
+		if (pos.x < TOOLTIP_PADDING)
+			pos.x = TOOLTIP_PADDING;
+
+		// y
+		overflow = (pos.y + tooltipHeight) - screenHeight;
+		if (overflow > 0){
+			pos.y -= overflow;
+			if (pos.y < 0)
+				pos.y = 0;
+		}
+
+		return pos;
 	}
 
 	@Override
@@ -322,7 +403,7 @@ extends HandledScreen<AStockbookHandler>
 		if (linesScrolledMax == 0)
 			return;
 
-		context.drawTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), 0,0, scrollbar.getWidth(),scrollbar.getHeight(), scrollbar.getWidth(),scrollbar.getHeight());
+		context.drawGuiTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
 	}
 
 
@@ -364,6 +445,7 @@ extends HandledScreen<AStockbookHandler>
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button){
+		this.setFocused(null);
 		if (button==0
 		 && mouseX >= (this.x+RAIL_X)
 		 && mouseX <  (this.x+RAIL_X+RAIL_W)

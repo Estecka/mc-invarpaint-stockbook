@@ -1,4 +1,7 @@
 {
+	"gui.invarpaint.stockbook.search": "Search...",
+	"gui.invapraint.stockbook.filter.discovered": "Showing discovered",
+	"gui.invapraint.stockbook.filter.stored": "Showing stored",
 	"item.invarpaint.stockbook": "Painting Stockbook",
 	"item.invarpaint.stockbook.name.complete": "Complete collection",
 	"item.invarpaint.stockbook.tooltip.content": "Paintings: %s/%s"

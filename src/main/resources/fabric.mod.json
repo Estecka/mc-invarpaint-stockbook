@@ -29,7 +29,8 @@
 		]
 	},
 	"mixins": [
-		"invarpaint-stockbook.mixins.json"
+		"invarpaint-stockbook.mixins.json",
+		{ "environment": "client", "config": "invarpaint-stockbook.client.mixins.json" }
 	],
 	"depends": {
 		"invariablepaintings": "^2.1",
