@@ -12,34 +12,31 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Rarity;
-import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
 public class StockbookItem
 extends Item
 {
 	static public final Identifier ID = Identifier.of("invarpaint", "stockbook");
-	static public final Item ITEM = new StockbookItem( new Item.Settings().maxCount(1) );
+	static public final Item ITEM = Items.register(RegistryKey.of(RegistryKeys.ITEM, ID), StockbookItem::new, new Item.Settings().maxCount(1));
 
 	static public void Register() {
-		Registry.register(Registries.ITEM, ID, ITEM);
 		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(StockbookItem::CreativeInventory);
 	}
 
 	static private void CreativeInventory(FabricItemGroupEntries entries){
 		entries.addAfter(Items.WRITABLE_BOOK, ITEM);
 
-		final var registry = entries.getContext().lookup().getOptionalWrapper(RegistryKeys.PAINTING_VARIANT);
+		final var registry = entries.getContext().lookup().getOptional(RegistryKeys.PAINTING_VARIANT);
 		if (!registry.isPresent())
 			return;
 
@@ -62,16 +59,17 @@ extends Item
 	}
 
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand){
+	public ActionResult use(World world, PlayerEntity player, Hand hand){
 		ItemStack stack = player.getStackInHand(hand);
 
+		// Check might superfluous, especially if stockboocks are to become dyable.
 		if (stack.isOf(ITEM)){
 			player.playSound(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0F, 1.0F);
 			player.openHandledScreen(StockbookServerHandler.GetFactory(stack));
-			return TypedActionResult.success(stack);
+			return ActionResult.SUCCESS;
 		}
 		else
-			return TypedActionResult.fail(stack);
+			return ActionResult.FAIL;
 	}
 
 	@Override

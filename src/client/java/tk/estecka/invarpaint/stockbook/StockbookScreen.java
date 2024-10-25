@@ -18,6 +18,7 @@ import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerInventory;
@@ -30,7 +31,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
 import net.minecraft.util.math.MathHelper;
-import tk.estecka.invarpaint.core.PaintStackUtil;
+import fr.estecka.invarpaint.api.PaintStackUtil;
 
 
 @Environment(EnvType.CLIENT)
@@ -109,7 +110,7 @@ implements TooltipPositioner
 	}
 	private StockbookScreen(AStockbookHandler handler, PlayerInventory player, Text title){
 		super(handler, player, title);
-		this.paintingRegistry = player.player.getWorld().getRegistryManager().get(RegistryKeys.PAINTING_VARIANT);
+		this.paintingRegistry = player.player.getWorld().getRegistryManager().getOrThrow(RegistryKeys.PAINTING_VARIANT);
 		if (handler instanceof StockbookClientHandler clientHandler)
 			this.handler = clientHandler;
 		else
@@ -182,7 +183,7 @@ implements TooltipPositioner
 
 		final Language lang = Language.getInstance();
 		final Identifier id = slot.GetVariant();
-		final PaintingVariant variant = paintingRegistry.getOrEmpty(id).orElse(null);
+		final PaintingVariant variant = paintingRegistry.getOptionalValue(id).orElse(null);
 
 		String name=null, author=null;
 		if (id != null){
@@ -278,7 +279,7 @@ implements TooltipPositioner
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
 		this.UpdateScrollability();
 
-		this.preview.SetVariant(paintingRegistry.getOrEmpty(variantId).orElse(null));
+		this.preview.SetVariant(paintingRegistry.getOptionalValue(variantId).orElse(null));
 		return true;
 	}
 
@@ -304,7 +305,7 @@ implements TooltipPositioner
 
 	@Override
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
-		context.drawGuiTexture(BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
+		context.drawGuiTexture(RenderLayer::getGuiTextured, BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
 		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
@@ -321,7 +322,7 @@ implements TooltipPositioner
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawGuiTexture(STOCK_SLOT, slot.x-2, slot.y-2, 233, 20, 20);
+			context.drawGuiTexture(RenderLayer::getGuiTexturedOverlay, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
 		}
 	}
 
@@ -344,7 +345,7 @@ implements TooltipPositioner
 				this.highlighted = null;
 		}
 
-		context.drawGuiTexture(FULL_SLOT, drawX, drawY, drawSize, drawSize);
+		context.drawGuiTexture(RenderLayer::getGuiTextured, FULL_SLOT, drawX, drawY, drawSize, drawSize);
 	}
 
 	@Override
@@ -394,7 +395,7 @@ implements TooltipPositioner
 	protected List<Text> getTooltipFromItem(ItemStack stack) {
 		String variantName = PaintStackUtil.GetVariantName(stack);
 		if (variantName != null)
-			this.preview.SetVariant(paintingRegistry.getOrEmpty(Identifier.tryParse(variantName)).orElse(null));
+			this.preview.SetVariant(paintingRegistry.getOptionalValue(Identifier.tryParse(variantName)).orElse(null));
 
 		return super.getTooltipFromItem(stack);
 	}
@@ -403,7 +404,7 @@ implements TooltipPositioner
 		if (linesScrolledMax == 0)
 			return;
 
-		context.drawGuiTexture(SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
+		context.drawGuiTexture(RenderLayer::getGuiTextured, SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
 	}
 
 

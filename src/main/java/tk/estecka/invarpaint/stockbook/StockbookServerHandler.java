@@ -9,7 +9,7 @@ import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import tk.estecka.invarpaint.core.PaintStackUtil;
+import fr.estecka.invarpaint.api.PaintStackUtil;
 
 public class StockbookServerHandler
 extends AStockbookHandler
@@ -50,7 +50,7 @@ extends AStockbookHandler
 		Slot slot = this.getSlot(slotId);
 		ItemStack stack  = slot.getStack();
 
-		if (!stack.isOf(Items.PAINTING) || !PaintStackUtil.HasVariantId(stack))
+		if (StockbookInventory.Reduce(stack) == null)
 			return ItemStack.EMPTY;
 
 		if (slot.inventory == this.playerInventory){
@@ -91,24 +91,20 @@ extends AStockbookHandler
 	 */
 	@Override
 	public void onSlotClick(int slotIndex, int button, SlotActionType action, PlayerEntity player){
+		// Disable quick-craft for the container. This action would definitely change the stack's identity, and could even mutate the container into air.
 		// Very hacky. No idea how this would behave if books were stackable.
 		if (action == SlotActionType.QUICK_CRAFT && slotIndex > 0 && this.getCursorStack() == this.container)
 			action = SlotActionType.PICKUP;
 
-		if (action != SlotActionType.PICKUP || slotIndex < 0 || slots.size() <= slotIndex){
-			super.onSlotClick(slotIndex, button, action, player);
-			this.LocateContainer();
-			return;
-		}
-		
-		Slot slot = this.slots.get(slotIndex);
-		if (this.getCursorStack() == this.container){
-			this.setCursorStack(slot.getStack());
-			slot.setStack(container);
-		}
-		else if (slot.getStack() == this.container){
+		if (action == SlotActionType.PICKUP 
+		&& 0 <= slotIndex && slotIndex < slots.size()
+		&& (this.getCursorStack() == container || this.getSlot(slotIndex).getStack() == container)
+		){
+			// Same behaviour as vanilla, but enforces preservation of pointers.
+			Slot slot = this.getSlot(slotIndex);
+			ItemStack swap = slot.getStack();
 			slot.setStack(this.getCursorStack());
-			this.setCursorStack(container);
+			this.setCursorStack(swap);
 		}
 		else
 			super.onSlotClick(slotIndex, button, action, player);

@@ -13,7 +13,7 @@ import net.minecraft.util.dynamic.Codecs;
 public class VariantCollectionComponent
 {
 	static public final Identifier ID = Identifier.of("invarpaint", "stockbook_content");
-	static public final Codec<VariantCollectionComponent> CODEC = Codec.unboundedMap(Identifier.CODEC, Codecs.NONNEGATIVE_INT).xmap(VariantCollectionComponent::new, v->v.content);
+	static public final Codec<VariantCollectionComponent> CODEC = Codec.unboundedMap(Identifier.CODEC, Codecs.NON_NEGATIVE_INT).xmap(VariantCollectionComponent::new, v->v.content);
 	static public final ComponentType<VariantCollectionComponent> TYPE = ComponentType.<VariantCollectionComponent>builder().codec(CODEC).build();
 
 	public final Map<@NotNull Identifier, @NotNull Integer> content;
@@ -30,5 +30,10 @@ public class VariantCollectionComponent
 	public void Validate(){
 		for (var e : this.content.entrySet())
 			assert e.getKey()!=null && e.getValue()!=null;
+	}
+
+	@Override
+	public boolean equals(Object other){
+		return other instanceof VariantCollectionComponent collection && collection.content.equals(this.content);
 	}
 }
