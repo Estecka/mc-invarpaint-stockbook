@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
@@ -41,8 +42,8 @@ implements Drawable
 		matrices.push();
 		matrices.scale(guiScale, guiScale, 1);
 
-		context.drawTexture(CHECKER_TEX, checkerX,checkerY, checkerW,checkerH, +0.5f,+0.5f, tilesHorizontal,tilesVertical, 2,2);
-		context.drawSprite(paintX,paintY, 0, paintW,paintH, sprite);
+		context.drawTexture(RenderLayer::getGuiTextured, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
+		context.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, paintX,paintY, 0, paintW,paintH);
 
 		matrices.pop();
 	}

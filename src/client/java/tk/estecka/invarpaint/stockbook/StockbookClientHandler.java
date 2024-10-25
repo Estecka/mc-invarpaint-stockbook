@@ -32,7 +32,7 @@ extends AStockbookHandler
 	 */
 	@Override
 	public MovableSlot getSlot(int index){
-		final var registry = playerInventory.player.getWorld().getRegistryManager().get(RegistryKeys.PAINTING_VARIANT);
+		final var registry = playerInventory.player.getWorld().getRegistryManager().getOrThrow(RegistryKeys.PAINTING_VARIANT);
 		int reqSize = index + 1;
 		int max = this.playerEndIndex + 2*registry.size();
 		if (max < reqSize && this.slots.size() <= max)
