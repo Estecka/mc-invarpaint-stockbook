@@ -322,7 +322,7 @@ implements TooltipPositioner
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawGuiTexture(RenderLayer::getGuiTexturedOverlay, STOCK_SLOT, slot.x-2, slot.y-2, 233, 20, 20);
+			context.drawGuiTexture(RenderLayer::getGuiTexturedOverlay, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
 		}
 	}
 
