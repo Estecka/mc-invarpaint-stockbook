@@ -31,4 +31,9 @@ public class VariantCollectionComponent
 		for (var e : this.content.entrySet())
 			assert e.getKey()!=null && e.getValue()!=null;
 	}
+
+	@Override
+	public boolean equals(Object other){
+		return other instanceof VariantCollectionComponent collection && collection.content.equals(this.content);
+	}
 }
