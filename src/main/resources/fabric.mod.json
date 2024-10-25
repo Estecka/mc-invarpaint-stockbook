@@ -9,14 +9,15 @@
 	],
 	"contact": {
 		"homepage": "https://modrinth.com/mod/invariable-paintings-stockbook",
-		"sources": "https://github.com/Estecka/mc-invarpaint-stockbook"
+		"sources": "https://github.com/Estecka/mc-invarpaint-stockbook",
+		"issues":  "https://github.com/Estecka/mc-invarpaint-stockbook/issues",
 	},
-	"license": "GNU AGPLv3",
+	"license": "EUPL",
 	"icon": "assets/invarpaint/icon.stockbook.png",
 	"environment": "*",
 	"custom": {
 		"modmenu":{
-			"parent": "invariablepaintings"
+			"parent": "invarpaint"
 		}
 	},
 
@@ -33,9 +34,9 @@
 		{ "environment": "client", "config": "invarpaint-stockbook.client.mixins.json" }
 	],
 	"depends": {
-		"invariablepaintings": "^2.1",
-		"minecraft": "~1.21",
-		"fabricloader": ">=0.15.11",
+		"invarpaint": "^3.0",
+		"minecraft": "^1.21.2",
+		"fabricloader": ">=0.16.7",
 		"fabric-api": "*",
 		"java": ">=21"
 	}

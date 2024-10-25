@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.6-SNAPSHOT'
+	id 'fabric-loom' version '1.7-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -25,7 +25,6 @@ repositories {
 
 loom {
 	splitEnvironmentSourceSets()
-
 	mods {
 		"invarpaint-stockbook" {
 			sourceSet sourceSets.main
@@ -33,6 +32,18 @@ loom {
 		}
 	}
 
+	runs {
+		client {
+			configName "Client"
+			programArgs "--username"
+			programArgs "Dev"
+			runDir "run/client"
+		}
+		server {
+			configName "Server"
+			runDir "run/server"
+		}
+	}
 }
 
 dependencies {
@@ -74,6 +85,7 @@ jar {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
 
+	exclude "**/*.sh"
 	exclude "**/*.xcf"
 	exclude "**/*.psd"
 	exclude "**/*.psb"
