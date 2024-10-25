@@ -28,10 +28,14 @@ implements IDrawContextDuck
 	}
 
 	@ModifyArg(
-		require=2,
-		method={ "drawTooltip", "drawOrderedTooltip" },
+		require=3,
+		method={
+			"drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;Ljava/util/Optional;IILnet/minecraft/util/Identifier;)V",
+			"drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
+			"drawOrderedTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
+		},
 		index=4,
-		at=@At(value="INVOKE", target="net/minecraft/client/gui/DrawContext.drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;)V")
+		at=@At(value="INVOKE", target="net/minecraft/client/gui/DrawContext.drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;Lnet/minecraft/util/Identifier;)V")
 	)
 	private TooltipPositioner UseCustomPositioner(TooltipPositioner original){
 		return this.tooltipPositioner;
