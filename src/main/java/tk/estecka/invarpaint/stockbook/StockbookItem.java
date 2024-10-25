@@ -12,8 +12,6 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.SoundEvents;
@@ -29,10 +27,9 @@ public class StockbookItem
 extends Item
 {
 	static public final Identifier ID = Identifier.of("invarpaint", "stockbook");
-	static public final Item ITEM = new StockbookItem( new Item.Settings().maxCount(1) );
+	static public final Item ITEM = Items.register(RegistryKey.of(RegistryKeys.ITEM, ID), StockbookItem::new, new Item.Settings().maxCount(1));
 
 	static public void Register() {
-		Registry.register(Registries.ITEM, ID, ITEM);
 		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(StockbookItem::CreativeInventory);
 	}
 

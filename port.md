@@ -19,6 +19,7 @@ Initial Release
 - All variants of "draw" in `DrawContext` now require a `RenderLayer` in some form as argument.
 - The order of existing arguments in `DrawContext.drawTexture` was rearranged.
 - The order of existing arguments in `DrawContext.drawSprite` was rearranged.
+- `Item`'s are now super intrusive and can't be instantiated without first being registered. You can register a factory for the item instead.
 ### Mappings:
 - `Codecs.NONNEGATIVE_INT` renamed to `NON_NEGATIVE_INT`
 - `WrapperLookup.getOptionalWrapper` renamed to `getOptional`
