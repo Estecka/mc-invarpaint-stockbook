@@ -4,7 +4,6 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
-import static fr.estecka.invarpaint.api.PaintStackUtil.HasVariant;
 
 public class StockbookSlot
 extends MovableSlot
@@ -35,14 +34,13 @@ extends MovableSlot
 		     ;
 	}
 
-	// TODO: double check that
 	@Override
 	public boolean canInsert(ItemStack stack){
-		Identifier acceptable = this.GetVariant();
-		Identifier incoming   = StockbookInventory.Reduce(stack);
+		Identifier currentId = this.GetVariant();
+		Identifier stackId   = StockbookInventory.Reduce(stack);
 		return stack.isOf(Items.PAINTING)
-		    && HasVariant(stack)
-		    && (acceptable==null || acceptable.equals(incoming))
+		    && stackId != null
+		    && (currentId==null || currentId.equals(stackId))
 		    ;
 	}
 }

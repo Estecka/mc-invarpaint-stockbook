@@ -50,8 +50,7 @@ extends AStockbookHandler
 		Slot slot = this.getSlot(slotId);
 		ItemStack stack  = slot.getStack();
 
-		// TODO: double-check that
-		if (!stack.isOf(Items.PAINTING) || !PaintStackUtil.HasVariant(stack))
+		if (StockbookInventory.Reduce(stack) == null)
 			return ItemStack.EMPTY;
 
 		if (slot.inventory == this.playerInventory){

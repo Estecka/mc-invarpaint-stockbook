@@ -62,7 +62,7 @@ extends Item
 	public ActionResult use(World world, PlayerEntity player, Hand hand){
 		ItemStack stack = player.getStackInHand(hand);
 
-		// TODO: Check might not be required, especially if stockboocks become dyable.
+		// Check might superfluous, especially if stockboocks are to become dyable.
 		if (stack.isOf(ITEM)){
 			player.playSound(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0F, 1.0F);
 			player.openHandledScreen(StockbookServerHandler.GetFactory(stack));
