@@ -9,7 +9,7 @@ import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import tk.estecka.invarpaint.core.PaintStackUtil;
+import fr.estecka.invarpaint.api.PaintStackUtil;
 
 public class StockbookServerHandler
 extends AStockbookHandler
@@ -50,7 +50,8 @@ extends AStockbookHandler
 		Slot slot = this.getSlot(slotId);
 		ItemStack stack  = slot.getStack();
 
-		if (!stack.isOf(Items.PAINTING) || !PaintStackUtil.HasVariantId(stack))
+		// TODO: double-check that
+		if (!stack.isOf(Items.PAINTING) || !PaintStackUtil.HasVariant(stack))
 			return ItemStack.EMPTY;
 
 		if (slot.inventory == this.playerInventory){
