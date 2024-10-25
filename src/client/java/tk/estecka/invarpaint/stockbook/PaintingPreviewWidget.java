@@ -43,7 +43,7 @@ implements Drawable
 		matrices.scale(guiScale, guiScale, 1);
 
 		context.drawTexture(RenderLayer::getGuiTextured, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
-		context.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, paintX,paintY, 0, paintW,paintH);
+		context.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, paintX,paintY,paintW,paintH);
 
 		matrices.pop();
 	}
