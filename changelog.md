@@ -19,3 +19,5 @@
 - Changed resources format to make use of sprite atlases.
 ### 1.1.1
 - Updated for MC 1.21.2
+### 1.1.2
+- Updated for MC 1.21.4
