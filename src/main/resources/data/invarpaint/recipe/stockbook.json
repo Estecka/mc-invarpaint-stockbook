@@ -3,8 +3,8 @@
 	"category": "misc",
 	"type": "minecraft:crafting_shaped",
 	"key": {
-		"~": { "item": "minecraft:leather" },
-		"#": { "item": "minecraft:painting" }
+		"~": "minecraft:leather",
+		"#": "minecraft:painting"
 	},
 	"pattern": [
 		"~~~",

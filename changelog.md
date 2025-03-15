@@ -21,3 +21,5 @@
 - Updated for MC 1.21.2
 ### 1.1.2
 - Updated for MC 1.21.4
+### 1.1.3
+- Fixed stockbook not being craftable in MC 1.21

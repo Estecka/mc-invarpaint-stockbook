@@ -36,7 +36,7 @@
 	"depends": {
 		"invarpaint": "^3.0",
 		"minecraft": "^1.21.2",
-		"fabricloader": ">=0.16.7",
+		"fabricloader": ">=0.16.8",
 		"fabric-api": "*",
 		"java": ">=21"
 	}
