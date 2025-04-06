@@ -25,6 +25,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -182,13 +183,13 @@ implements TooltipPositioner
 			return true;
 
 		final Language lang = Language.getInstance();
-		final Identifier id = slot.GetVariant();
-		final PaintingVariant variant = paintingRegistry.getOptionalValue(id).orElse(null);
+		final PaintingEntry entry = slot.GetVariant();
+		final PaintingVariant variant = (entry!=null) ? entry.value() : null;
 
 		String name=null, author=null;
-		if (id != null){
-			name   = lang.get(id.toTranslationKey("painting", "title" ), null);
-			author = lang.get(id.toTranslationKey("painting", "author"), null);
+		if (entry != null){
+			name   = lang.get(entry.id.toTranslationKey("painting", "title" ), null);
+			author = lang.get(entry.id.toTranslationKey("painting", "author"), null);
 		}
 
 		String size="0x0";
@@ -196,7 +197,7 @@ implements TooltipPositioner
 			size = String.format("%dx%d", variant.width(), variant.height());
 
 		String query = searchBox.getText().toLowerCase().trim();
-		return id.toString().contains(query)
+		return entry.toString().contains(query)
 		    || size.contains(query)
 		    || (name   != null && name  .toLowerCase().contains(query))
 		    || (author != null && author.toLowerCase().contains(query))
@@ -205,7 +206,7 @@ implements TooltipPositioner
 
 	private void SortSearchResult(){
 		this.searchResults.sort((a,b) -> {
-			Identifier iA=a.GetVariant(), iB=b.GetVariant();
+			PaintingEntry iA=a.GetVariant(), iB=b.GetVariant();
 			return (iA == iB)   ?  0
 			     : (iA == null) ? -1
 			     : (iB == null) ? +1
@@ -253,12 +254,12 @@ implements TooltipPositioner
 
 	}
 
-	public boolean ScrollTo(@NotNull Identifier variantId){
+	public boolean ScrollTo(@NotNull PaintingEntry variant){
 		StockbookSlot slot = null;
 		int index = -1;
 
 		for (int i=0; i<handler.bookSlots.size(); ++i)
-		if  (variantId.equals(handler.bookSlots.get(i).GetVariant())) {
+		if  (variant.equals(handler.bookSlots.get(i).GetVariant())) {
 			slot = handler.bookSlots.get(i);
 			break;
 		}
@@ -279,7 +280,7 @@ implements TooltipPositioner
 		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
 		this.UpdateScrollability();
 
-		this.preview.SetVariant(paintingRegistry.getOptionalValue(variantId).orElse(null));
+		this.preview.SetVariant(variant.value);
 		return true;
 	}
 
@@ -393,9 +394,9 @@ implements TooltipPositioner
 
 	@Override
 	protected List<Text> getTooltipFromItem(ItemStack stack) {
-		String variantName = PaintStackUtil.GetVariantName(stack);
-		if (variantName != null)
-			this.preview.SetVariant(paintingRegistry.getOptionalValue(Identifier.tryParse(variantName)).orElse(null));
+		RegistryEntry<PaintingVariant> variantEntry = PaintStackUtil.GetVariantEntry(stack);
+		if (variantEntry != null)
+			this.preview.SetVariant(variantEntry.value());
 
 		return super.getTooltipFromItem(stack);
 	}

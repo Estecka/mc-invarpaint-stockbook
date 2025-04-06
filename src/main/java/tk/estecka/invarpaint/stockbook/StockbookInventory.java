@@ -11,7 +11,6 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.util.Identifier;
 import fr.estecka.invarpaint.api.PaintStackUtil;
 
 
@@ -26,13 +25,13 @@ implements Inventory
 	 * variant that  has been discovered, despite no longer  being stored in the
 	 * book.
 	 */
-	private final Object2IntMap<@NotNull Identifier> content = new Object2IntOpenHashMap<>();
+	private final Object2IntMap<@NotNull PaintingEntry> content = new Object2IntOpenHashMap<>();
 	/**
 	 * For the most predictable  results on the  clientside, the variant in each
 	 * slot  should remain  constant  for the lifetime  of the screen. I.e. only
 	 * add, not set.
 	 */
-	private final List<@NotNull Identifier> layout = new ArrayList<>();
+	private final List<@NotNull PaintingEntry> layout = new ArrayList<>();
 
 	public @Nullable ScreenHandler handler;
 
@@ -42,28 +41,28 @@ implements Inventory
 	}
 
 	/**
-	 * @return null if the item is invalid to hold, otherwise, its variant id.
+	 * @return null if the item is invalid to hold, otherwise, its variant entry.
 	 */
-	static public @Nullable Identifier Reduce(ItemStack stack){
-		Identifier id = null;
+	static public @Nullable PaintingEntry Reduce(ItemStack stack){
+		PaintingEntry variant = null;
 
-		String rawVariant = PaintStackUtil.GetVariantName(stack);
-		if (stack.isOf(Items.PAINTING) && rawVariant!=null)
-			id = Identifier.tryParse(rawVariant);
+		var variantEntry = PaintStackUtil.GetVariantEntry(stack);
+		if (stack.isOf(Items.PAINTING) && variantEntry!=null)
+			variant = new PaintingEntry(variantEntry);
 
-		return id;
+		return variant;
 	}
 
 	/**
 	 * This function also keeps the layout up to date. It should always be used
 	 * when inserting new identifiers into the content.
 	 */
-	public void SetStack(@NotNull Identifier variantId, int count){
-		assert variantId != null;
+	public void SetStack(@NotNull PaintingEntry variant, int count){
+		assert variant != null;
 
-		if (!this.layout.contains(variantId))
-			this.layout.add(variantId);
-		this.content.put(variantId, count);
+		if (!this.layout.contains(variant))
+			this.layout.add(variant);
+		this.content.put(variant, count);
 	}
 
 	@Override
@@ -87,7 +86,7 @@ implements Inventory
 		return Integer.MAX_VALUE;
 	}
 
-	public @Nullable Identifier GetVariant(int i){
+	public @Nullable PaintingEntry GetVariant(int i){
 		return i<layout.size() ? layout.get(i) : null;
 	}
 
@@ -99,13 +98,13 @@ implements Inventory
 			return this.getStack(this.layout.get(i));
 	}
 
-	public ItemStack getStack(Identifier variantId){
+	public ItemStack getStack(PaintingEntry variant){
 		var stack = new ItemStack(Items.PAINTING);
 
-		if (variantId != null)
-			PaintStackUtil.SetVariant(stack, variantId.toString());
+		if (variant != null)
+			PaintStackUtil.SetVariant(stack, variant.entry());
 
-		int count = content.getInt(variantId);
+		int count = content.getInt(variant);
 		stack.setCount(count);
 		return stack;
 	}
@@ -119,25 +118,25 @@ implements Inventory
 	
 	@Override
 	public ItemStack removeStack(int i){
-		Identifier variantId  = layout.get(i);
+		PaintingEntry variant  = layout.get(i);
 
-		ItemStack stack = PaintStackUtil.CreateVariant(variantId.toString());
-		stack.setCount(content.getInt(variantId));
-		this.SetStack(variantId, 0);
+		ItemStack stack = PaintStackUtil.CreateVariant(variant.entry());
+		stack.setCount(content.getInt(variant));
+		this.SetStack(variant, 0);
 		this.markDirty();
 		return stack;
 	}
 	
 	@Override
 	public ItemStack removeStack(int i, int amount){
-		Identifier variant = layout.get(i);
+		PaintingEntry variant = layout.get(i);
 		int stored = content.getInt(variant);
 		amount = Math.min(amount, stored);
 		
 		this.SetStack(variant, stored - amount);
 		this.markDirty();
 
-		ItemStack stack = PaintStackUtil.CreateVariant(variant.toString());
+		ItemStack stack = PaintStackUtil.CreateVariant(variant.entry());
 		stack.setCount(amount);
 		return stack;
 	}
@@ -149,8 +148,8 @@ implements Inventory
 	 */
 	@Override
 	public void setStack(int i, ItemStack stack){
-		@Nullable Identifier neoVariant = Reduce(stack);
-		Identifier oldVariant = this.layout.get(i);
+		@Nullable PaintingEntry neoVariant = Reduce(stack);
+		PaintingEntry oldVariant = this.layout.get(i);
 		if (!stack.isEmpty() && neoVariant == null)
 			throw new IllegalArgumentException("An invalid item has been inserted into a stockbook: "+stack.toString());
 
@@ -167,7 +166,7 @@ implements Inventory
 	 * @return The remainder, or the original if nothing was inserted.
 	 */
 	public ItemStack TryInsert(ItemStack incoming){
-		Identifier variantId = Reduce(incoming);
+		PaintingEntry variantId = Reduce(incoming);
 		if (variantId == null)
 			return incoming;
 
@@ -223,8 +222,8 @@ implements Inventory
 
 	@Override
 	public boolean isValid(int slot, ItemStack stack){
-		Identifier incoming = Reduce(stack);
-		Identifier acceptable = layout.get(slot);
+		PaintingEntry incoming = Reduce(stack);
+		PaintingEntry acceptable = layout.get(slot);
 		return incoming != null && (acceptable == null || incoming.equals(acceptable));
 	}
 
@@ -259,7 +258,7 @@ implements Inventory
 
 		public ItemStack getStack(int i){
 			if (parent.isGhost(i))
-				return PaintStackUtil.CreateVariant(parent.GetVariant(i).toString());
+				return PaintStackUtil.CreateVariant(parent.GetVariant(i).entry());
 			else
 				return ItemStack.EMPTY;
 		}

@@ -27,3 +27,8 @@ Initial Release
 - `Registry.getOrEmpty` renamed to `getOptionalValue`
 - `DrawContext.drawSprite` renamed to `drawSpriteStretched`.
 
+### 1.21.5
+- Painting Variants are now stored as regitry entries instead of identifiers.
+- Item Stack variants are no longer stored in the `entity_data` component.
+
+

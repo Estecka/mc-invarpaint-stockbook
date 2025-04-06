@@ -5,13 +5,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
 
 
 public class StockbookClientHandler
 extends AStockbookHandler
 {
-	public @Nullable Identifier requestedFocus = null;
+	public @Nullable PaintingEntry requestedFocus = null;
 
 	public StockbookClientHandler(int syncId, PlayerInventory player){
 		super(syncId, player, new VariableSizeInventory(), new VariableSizeInventory());

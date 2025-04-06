@@ -1,11 +1,13 @@
 package tk.estecka.invarpaint.stockbook;
 
-import java.util.List;
+import java.util.function.Consumer;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.TooltipDisplayComponent;
+import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
@@ -14,6 +16,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -42,9 +45,9 @@ extends Item
 
 		ItemStack fullBook = new ItemStack(ITEM);
 
-		Object2IntMap<Identifier> everything = new Object2IntOpenHashMap<>();
-		for (RegistryKey<?> key : registry.get().streamKeys().toList())
-			everything.put(key.getValue(), 1);
+		Object2IntMap<PaintingEntry> everything = new Object2IntOpenHashMap<>();
+		for (RegistryEntry<PaintingVariant> entry : registry.get().streamEntries().toList())
+			everything.put(new PaintingEntry(entry), 1);
 
 		fullBook.set(VariantCollectionComponent.TYPE, new VariantCollectionComponent(everything));
 		fullBook.set(DataComponentTypes.ITEM_NAME, Text.translatable("item.invarpaint.stockbook.name.complete"));
@@ -73,9 +76,9 @@ extends Item
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type){
+	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> tooltip, TooltipType type){
 		VariantCollectionComponent component = stack.get(VariantCollectionComponent.TYPE);
-		if (component == null || component.content.isEmpty())
+		if (component == null || component.content.isEmpty() || !displayComponent.shouldDisplay(VariantCollectionComponent.TYPE))
 			return;
 
 		int stored=0, found=0;
@@ -84,6 +87,6 @@ extends Item
 			stored += (entry.getValue() > 0) ? 1 : 0;
 		}
 
-		tooltip.add(Text.translatable("item.invarpaint.stockbook.tooltip.content", stored, found).formatted(Formatting.GRAY));
+		tooltip.accept(Text.translatable("item.invarpaint.stockbook.tooltip.content", stored, found).formatted(Formatting.GRAY));
 	}
 }
