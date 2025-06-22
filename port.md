@@ -27,8 +27,11 @@ Initial Release
 - `Registry.getOrEmpty` renamed to `getOptionalValue`
 - `DrawContext.drawSprite` renamed to `drawSpriteStretched`.
 
-### 1.21.5
+## 1.21.5
 - Painting Variants are now stored as regitry entries instead of identifiers.
 - Item Stack variants are no longer stored in the `entity_data` component.
 
-
+## 1.21.6
+- `DrawContext::drawGuiTexture` now takes a render pipeline instead of a render layer.
+- `DrawContext::getMatrices` now returns a standard 3x2 matrice instead of Mojang's own 4x4.
+- `DrawContext::drawTooltip`'s now takes an extra boolean parameter.

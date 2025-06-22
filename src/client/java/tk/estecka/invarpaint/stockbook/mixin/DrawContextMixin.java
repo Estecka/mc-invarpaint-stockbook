@@ -27,6 +27,9 @@ implements IDrawContextDuck
 		this.tooltipPositioner = value;
 	}
 
+	/**
+	 * Tries to redirect all instances of `HoveredTooltipPositioner.INSTANCE`
+	 */
 	@ModifyArg(
 		require=3,
 		method={
@@ -35,7 +38,7 @@ implements IDrawContextDuck
 			"drawOrderedTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
 		},
 		index=4,
-		at=@At(value="INVOKE", target="net/minecraft/client/gui/DrawContext.drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;Lnet/minecraft/util/Identifier;)V")
+		at=@At(value="INVOKE", target="net/minecraft/client/gui/DrawContext.drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;Lnet/minecraft/util/Identifier;Z)V")
 	)
 	private TooltipPositioner UseCustomPositioner(TooltipPositioner original){
 		return this.tooltipPositioner;

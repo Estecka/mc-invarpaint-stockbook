@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -18,7 +19,6 @@ import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerInventory;
@@ -306,7 +306,7 @@ implements TooltipPositioner
 
 	@Override
 	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
-		context.drawGuiTexture(RenderLayer::getGuiTextured, BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
 		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
@@ -323,7 +323,7 @@ implements TooltipPositioner
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawGuiTexture(RenderLayer::getGuiTexturedOverlay, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
+			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
 		}
 	}
 
@@ -346,7 +346,7 @@ implements TooltipPositioner
 				this.highlighted = null;
 		}
 
-		context.drawGuiTexture(RenderLayer::getGuiTextured, FULL_SLOT, drawX, drawY, drawSize, drawSize);
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, FULL_SLOT, drawX, drawY, drawSize, drawSize);
 	}
 
 	@Override
@@ -405,7 +405,7 @@ implements TooltipPositioner
 		if (linesScrolledMax == 0)
 			return;
 
-		context.drawGuiTexture(RenderLayer::getGuiTextured, SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
 	}
 
 

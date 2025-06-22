@@ -1,12 +1,12 @@
 package tk.estecka.invarpaint.stockbook;
 
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3x2fStack;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.util.Identifier;
 
@@ -38,14 +38,14 @@ implements Drawable
 
 		// Uses real pixel coordinates to increase precision.
 		final float guiScale = (float)(1f/MinecraftClient.getInstance().getWindow().getScaleFactor());
-		final MatrixStack matrices = context.getMatrices();
-		matrices.push();
-		matrices.scale(guiScale, guiScale, 1);
+		final Matrix3x2fStack matrices = context.getMatrices();
+		matrices.pushMatrix();
+		matrices.scale(guiScale, guiScale);
 
-		context.drawTexture(RenderLayer::getGuiTextured, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
-		context.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, paintX,paintY,paintW,paintH);
+		context.drawTexture(RenderPipelines.GUI_TEXTURED, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
+		context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, paintX,paintY,paintW,paintH);
 
-		matrices.pop();
+		matrices.popMatrix();
 	}
 
 	public void Bake(){
