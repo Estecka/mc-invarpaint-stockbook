@@ -11,6 +11,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -19,6 +20,8 @@ import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
 import net.minecraft.entity.player.PlayerInventory;
@@ -111,7 +114,7 @@ implements TooltipPositioner
 	}
 	private StockbookScreen(AStockbookHandler handler, PlayerInventory player, Text title){
 		super(handler, player, title);
-		this.paintingRegistry = player.player.getWorld().getRegistryManager().getOrThrow(RegistryKeys.PAINTING_VARIANT);
+		this.paintingRegistry = player.player.getEntityWorld().getRegistryManager().getOrThrow(RegistryKeys.PAINTING_VARIANT);
 		if (handler instanceof StockbookClientHandler clientHandler)
 			this.handler = clientHandler;
 		else
@@ -414,8 +417,8 @@ implements TooltipPositioner
 /******************************************************************************/
 
 	@Override
-	public boolean charTyped(char c, int modifiers){
-		boolean r = super.charTyped(c, modifiers);
+	public boolean charTyped(CharInput charInput){
+		boolean r = super.charTyped(charInput);
 
 		if (r && searchBox.isFocused())
 			this.UpdateSearchResults();
@@ -424,18 +427,19 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers){
+	public boolean keyPressed(KeyInput keyInput){
+		int keyCode = keyInput.getKeycode();
 		if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
 			this.setFocused(searchBox);
 		else if (this.searchBox.isFocused()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE )
 				this.setFocused(null);
-			else if (searchBox.keyPressed(keyCode, scanCode, modifiers))
+			else if (searchBox.keyPressed(keyInput))
 				this.UpdateSearchResults();
 			return true;
 		}
 
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(keyInput);
 	}
 
 	@Override
@@ -446,9 +450,12 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button){
+	public boolean mouseClicked(Click click, boolean doubled){
+		double mouseX = click.x();
+		double mouseY = click.y();
+
 		this.setFocused(null);
-		if (button==0
+		if (click.button() == 0
 		 && mouseX >= (this.x+RAIL_X)
 		 && mouseX <  (this.x+RAIL_X+RAIL_W)
 		 && mouseY >= (this.y+RAIL_Y)
@@ -459,23 +466,23 @@ implements TooltipPositioner
 			this.UpdateScrollbar();
 			return true;
 		}
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(click, doubled);
 	}
 
 	@Override
-	public boolean mouseReleased(double mouseX, double mouseY, int button){
-		if (button == 0)
+	public boolean mouseReleased(Click click){
+		if (click.button() == 0)
 			this.isScrolling = false;
 
-		return super.mouseReleased(mouseX, mouseY, button);
+		return super.mouseReleased(click);
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY){
+	public boolean mouseDragged(Click click, double deltaX, double deltaY){
 		if (!this.isScrolling)
-			return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+			return super.mouseDragged(click, deltaX, deltaY);
 
-		this.linesScrolled = (int)Math.round( linesScrolledMax * (mouseY - this.y - RAIL_Y) / RAIL_H );
+		this.linesScrolled = (int)Math.round( linesScrolledMax * (click.y() - this.y - RAIL_Y) / RAIL_H );
 		this.UpdateScrollbar();
 		return true;
 	}

@@ -2,6 +2,7 @@ package tk.estecka.invarpaint.stockbook;
 
 import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ToggleButtonWidget;
 
@@ -34,8 +35,8 @@ extends ToggleButtonWidget
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (super.mouseClicked(mouseX, mouseY, button)){
+	public boolean mouseClicked(Click click, boolean doubled) {
+		if (super.mouseClicked(click, doubled)){
 			this.setToggled(!this.isToggled());
 			this.onToggled.accept(this.isToggled());
 			return true;

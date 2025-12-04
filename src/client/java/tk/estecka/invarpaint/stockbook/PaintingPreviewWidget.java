@@ -8,6 +8,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.entity.decoration.painting.PaintingVariant;
+import net.minecraft.util.Atlases;
 import net.minecraft.util.Identifier;
 
 
@@ -54,7 +55,11 @@ implements Drawable
 			return;
 		}
 
-		this.sprite = MinecraftClient.getInstance().getPaintingManager().getPaintingSprite(this.variant);
+		this.sprite = MinecraftClient.getInstance()
+			.getAtlasManager()
+			.getAtlasTexture(Atlases.PAINTINGS)
+			.getSprite(this.variant.assetId())
+			;
 
 		int varW = variant.width();
 		int varH = variant.height();
@@ -90,8 +95,6 @@ implements Drawable
 	public void SetVariant(PaintingVariant variant){
 		if (this.variant != variant){
 			this.variant = variant;
-			this.sprite = (variant==null) ? null : MinecraftClient.getInstance().getPaintingManager().getPaintingSprite(variant);
-
 			this.Bake();
 		}
 	}

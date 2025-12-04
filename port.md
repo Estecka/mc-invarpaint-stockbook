@@ -35,3 +35,8 @@ Initial Release
 - `DrawContext::drawGuiTexture` now takes a render pipeline instead of a render layer.
 - `DrawContext::getMatrices` now returns a standard 3x2 matrice instead of Mojang's own 4x4.
 - `DrawContext::drawTooltip`'s now takes an extra boolean parameter.
+
+## 1.21.9
+- `Entity::getWorld` was replaced with `HeldItemContext::getEntityWorld`.
+- UI methods now take `Click`, `KeyInput`, or `CharInput` instead of raw data: `Element::onMouseClicked`,`onMouseReleased`,`mouseDragged`,`charTyped`.
+- `MinecraftClient::getPaintingManager` was replaced with `getAtlasManager`.
