@@ -29,3 +29,6 @@
 - Updated for MC 1.21.6
 ### 1.1.6
 - Updated for MC 1.21.9
+### 1.1.7
+- Updated for MC 1.21.11
+- Fixed an error when trying to insert a stockbook into itself.
