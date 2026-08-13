@@ -91,24 +91,24 @@ extends AStockbookHandler
 	 */
 	@Override
 	public void onSlotClick(int slotIndex, int button, SlotActionType action, PlayerEntity player){
+		// Disable quick-craft for the container. This action would definitely change the stack's identity, and could even mutate the container into air.
 		// Very hacky. No idea how this would behave if books were stackable.
 		if (action == SlotActionType.QUICK_CRAFT && slotIndex > 0 && this.getCursorStack() == this.container)
 			action = SlotActionType.PICKUP;
 
-		if (action != SlotActionType.PICKUP || slotIndex < 0 || slots.size() <= slotIndex){
-			super.onSlotClick(slotIndex, button, action, player);
-			this.LocateContainer();
-			return;
-		}
-		
-		Slot slot = this.slots.get(slotIndex);
-		if (this.getCursorStack() == this.container){
-			this.setCursorStack(slot.getStack());
-			slot.setStack(container);
-		}
-		else if (slot.getStack() == this.container){
+		Slot slot = null;
+		if (0 <= slotIndex && slotIndex < slots.size())
+			slot = this.getSlot(slotIndex);
+
+		if (action == SlotActionType.PICKUP
+		&& slot != null
+		&& (this.getCursorStack() == container || slot.getStack() == container)
+		&& slot.canInsert(this.getCursorStack())
+		){
+			// Same behaviour as vanilla, but enforces preservation of pointers.
+			ItemStack swap = slot.getStack();
 			slot.setStack(this.getCursorStack());
-			this.setCursorStack(container);
+			this.setCursorStack(swap);
 		}
 		else
 			super.onSlotClick(slotIndex, button, action, player);
