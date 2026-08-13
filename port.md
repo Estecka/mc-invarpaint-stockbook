@@ -40,3 +40,6 @@ Initial Release
 - `Entity::getWorld` was replaced with `HeldItemContext::getEntityWorld`.
 - UI methods now take `Click`, `KeyInput`, or `CharInput` instead of raw data: `Element::onMouseClicked`,`onMouseReleased`,`mouseDragged`,`charTyped`.
 - `MinecraftClient::getPaintingManager` was replaced with `getAtlasManager`.
+
+## 1.21.11
+- `ToggleButtonWidget` was removed. Use `CyclingButtonWidget::onOffBuilder` instead.

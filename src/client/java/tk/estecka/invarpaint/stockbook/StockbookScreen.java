@@ -19,6 +19,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
+import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
@@ -29,6 +30,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -54,6 +56,8 @@ implements TooltipPositioner
 		Identifier.of("invarpaint", "stockbook/filter_enabled_highlighted"),
 		Identifier.of("invarpaint", "stockbook/filter_disabled_highlighted")
 	);
+	static private final Tooltip FILTER_TOOLTIP_ON  = Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.stored"));
+	static private final Tooltip FILTER_TOOLTIP_OFF = Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.discovered"));
 
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
@@ -79,14 +83,14 @@ implements TooltipPositioner
 	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
-	private final SimpleToggleButton filterButton = new SimpleToggleButton(0, 0, FILTER_W, FILTER_H, false, b ->this.UpdateSearchResults());
+	private final CyclingButtonWidget<Boolean> filterButton = CyclingButtonWidget.onOffBuilder(false)
+		.icon( (button,value)->FILTER_TEXTURES.get(value, button.isSelected()) )
+		.labelType(CyclingButtonWidget.LabelType.HIDE)
+		.tooltip(enabled -> enabled ? FILTER_TOOLTIP_ON : FILTER_TOOLTIP_OFF)
+		.build(x, y, FILTER_W, FILTER_H, ScreenTexts.EMPTY, (button,value)->this.UpdateSearchResults())
+		;
 	{
 		searchBox.setPlaceholder(Text.translatable("gui.invarpaint.stockbook.search").formatted(Formatting.ITALIC, Formatting.GRAY));
-		filterButton.setTextures(FILTER_TEXTURES);
-		filterButton.SetToolTips(
-			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.stored")),
-			Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.discovered"))
-		);
 	}
 
 	// The amount of slots in the book, the last time the layout was updated.
@@ -179,7 +183,7 @@ implements TooltipPositioner
 	}
 
 	private boolean MatchesSearch(StockbookSlot slot){
-		if (filterButton.isToggled() && slot.getStack().isEmpty())
+		if (filterButton.getValue() && slot.getStack().isEmpty())
 			return false;
 
 		if (searchBox.getText().isBlank())
