@@ -96,12 +96,16 @@ extends AStockbookHandler
 		if (action == SlotActionType.QUICK_CRAFT && slotIndex > 0 && this.getCursorStack() == this.container)
 			action = SlotActionType.PICKUP;
 
-		if (action == SlotActionType.PICKUP 
-		&& 0 <= slotIndex && slotIndex < slots.size()
-		&& (this.getCursorStack() == container || this.getSlot(slotIndex).getStack() == container)
+		Slot slot = null;
+		if (0 <= slotIndex && slotIndex < slots.size())
+			slot = this.getSlot(slotIndex);
+
+		if (action == SlotActionType.PICKUP
+		&& slot != null
+		&& (this.getCursorStack() == container || slot.getStack() == container)
+		&& slot.canInsert(this.getCursorStack())
 		){
 			// Same behaviour as vanilla, but enforces preservation of pointers.
-			Slot slot = this.getSlot(slotIndex);
 			ItemStack swap = slot.getStack();
 			slot.setStack(this.getCursorStack());
 			this.setCursorStack(swap);

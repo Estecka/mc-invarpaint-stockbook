@@ -26,4 +26,3 @@ Initial Release
 - `DynamicRegistryManager.get` renamed to `getOrThrow`
 - `Registry.getOrEmpty` renamed to `getOptionalValue`
 - `DrawContext.drawSprite` renamed to `drawSpriteStretched`.
-
