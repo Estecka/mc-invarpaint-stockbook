@@ -2,26 +2,26 @@ package tk.estecka.invarpaint.stockbook;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.screen.Property;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
 
 public abstract class AStockbookHandler
-extends ScreenHandler
+extends AbstractContainerMenu
 {
-	static public final Identifier ID = Identifier.of("invarpaint", "stockbook_handler");
-	static ScreenHandlerType.Factory<AStockbookHandler> clientFactory = (syncId,playInv)->{ throw new AssertionError("Not on client"); };
-	static public final ScreenHandlerType<AStockbookHandler> TYPE = new ScreenHandlerType<>((syncId,playInv)->clientFactory.create(syncId,playInv), FeatureFlags.VANILLA_FEATURES);
+	static public final Identifier ID = Identifier.fromNamespaceAndPath("invarpaint", "stockbook_handler");
+	static MenuType.MenuSupplier<AStockbookHandler> clientFactory = (syncId,playInv)->{ throw new AssertionError("Not on client"); };
+	static public final MenuType<AStockbookHandler> TYPE = new MenuType<>((syncId,playInv)->clientFactory.create(syncId,playInv), FeatureFlags.VANILLA_SET);
 	static public void Register(){
-		Registry.register(Registries.SCREEN_HANDLER, ID, TYPE);
+		Registry.register(BuiltInRegistries.MENU, ID, TYPE);
 	}
 
 
@@ -30,24 +30,24 @@ extends ScreenHandler
 	 * if the  container is  not in this  handler's  slots, i.e, in the player's
 	 * off-hand.
 	 */
-	public final Property containerSlot = Property.create();
+	public final DataSlot containerSlot = DataSlot.standalone();
 
 	// The main slots of the container itself.
 	public final List<StockbookSlot> bookSlots = new ArrayList<>();
 
-	protected final PlayerInventory playerInventory;
-	protected final Inventory bookInventory;
-	protected final Inventory placeholdersInventory;
+	protected final Inventory playerInventory;
+	protected final Container bookInventory;
+	protected final Container placeholdersInventory;
 	protected final int playerEndIndex;
 
 
-	protected AStockbookHandler(int syncId, PlayerInventory inventory, Inventory bookView, Inventory ghostView){
+	protected AStockbookHandler(int syncId, Inventory inventory, Container bookView, Container ghostView){
 		super(TYPE, syncId);
 		this.playerInventory = inventory;
 		this.bookInventory = bookView;
 		this.placeholdersInventory = ghostView;
 
-		this.addProperty(containerSlot);
+		this.addDataSlot(containerSlot);
 		containerSlot.set(-1);
 
 		for (int x=0; x<9; ++x) {
@@ -63,7 +63,7 @@ extends ScreenHandler
 
 		this.playerEndIndex = this.slots.size();
 
-		for (int i=0; i<bookView.size(); ++i)
+		for (int i=0; i<bookView.getContainerSize(); ++i)
 			this.AddBookSlot();
 
 	}
@@ -90,14 +90,14 @@ extends ScreenHandler
 	}
 
 	@Override
-	public boolean canUse(PlayerEntity player){
-		return bookInventory.canPlayerUse(player);
+	public boolean stillValid(Player player){
+		return bookInventory.stillValid(player);
 	}
 
 	@Override
-	public void onClosed(PlayerEntity player){
-		super.onClosed(player);
-		this.playerInventory.onClose(player);
+	public void removed(Player player){
+		super.removed(player);
+		this.playerInventory.stopOpen(player);
 	}
 
 }

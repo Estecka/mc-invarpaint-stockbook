@@ -1,21 +1,21 @@
 package tk.estecka.invarpaint.stockbook;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.decoration.painting.PaintingVariant;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.entity.decoration.painting.PaintingVariant;
-import net.minecraft.util.Atlases;
-import net.minecraft.util.Identifier;
 
 
 public class PaintingPreviewWidget
-implements Drawable
+implements Renderable
 {
-	static private final Identifier CHECKER_TEX = Identifier.of("invarpaint", "textures/gui/stockbook_checker.png");
+	static private final Identifier CHECKER_TEX = Identifier.fromNamespaceAndPath("invarpaint", "textures/gui/stockbook_checker.png");
 
 	private int menuX, menuY, menuSize;
 	private int pixelX, pixelY, pixelSize;
@@ -24,7 +24,7 @@ implements Drawable
 	private int checkerX, checkerY, checkerW, checkerH;
 
 	private @Nullable PaintingVariant variant;
-	private @Nullable Sprite sprite;
+	private @Nullable TextureAtlasSprite sprite;
 	private int paintX, paintY, paintW, paintH;
 
 	public PaintingPreviewWidget(int size){
@@ -33,18 +33,18 @@ implements Drawable
 
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta){
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta){
 		if (this.sprite == null)
 			return;
 
 		// Uses real pixel coordinates to increase precision.
-		final float guiScale = (float)(1f/MinecraftClient.getInstance().getWindow().getScaleFactor());
-		final Matrix3x2fStack matrices = context.getMatrices();
+		final float guiScale = (float)(1f/Minecraft.getInstance().getWindow().getGuiScale());
+		final Matrix3x2fStack matrices = context.pose();
 		matrices.pushMatrix();
 		matrices.scale(guiScale, guiScale);
 
-		context.drawTexture(RenderPipelines.GUI_TEXTURED, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
-		context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, paintX,paintY,paintW,paintH);
+		context.blit(RenderPipelines.GUI_TEXTURED, CHECKER_TEX, checkerX,checkerY, +0.5f,+0.5f, checkerW,checkerH, tilesHorizontal,tilesVertical, 2,2);
+		context.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, paintX,paintY,paintW,paintH);
 
 		matrices.popMatrix();
 	}
@@ -55,9 +55,9 @@ implements Drawable
 			return;
 		}
 
-		this.sprite = MinecraftClient.getInstance()
+		this.sprite = Minecraft.getInstance()
 			.getAtlasManager()
-			.getAtlasTexture(Atlases.PAINTINGS)
+			.getAtlasOrThrow(AtlasIds.PAINTINGS)
 			.getSprite(this.variant.assetId())
 			;
 
@@ -68,7 +68,7 @@ implements Drawable
 		int maxTiles = Math.max(tilesHorizontal, tilesVertical);
 
 		// Uses real pixel coordinates to increase precision.
-		final int guiScale = (int)MinecraftClient.getInstance().getWindow().getScaleFactor();
+		final int guiScale = (int)Minecraft.getInstance().getWindow().getGuiScale();
 		this.pixelSize = guiScale * this.menuSize;
 		this.pixelX = guiScale * this.menuX;
 		this.pixelY = guiScale * this.menuY;

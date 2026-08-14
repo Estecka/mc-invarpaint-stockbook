@@ -1,29 +1,29 @@
 package tk.estecka.invarpaint.stockbook.mixin;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
-import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import tk.estecka.invarpaint.stockbook.IDrawContextDuck;
 
-@Mixin(DrawContext.class)
+@Mixin(GuiGraphicsExtractor.class)
 public class DrawContextMixin
 implements IDrawContextDuck
 {
 	@Unique
-	private @NotNull TooltipPositioner tooltipPositioner = HoveredTooltipPositioner.INSTANCE;
+	private @NotNull ClientTooltipPositioner tooltipPositioner = DefaultTooltipPositioner.INSTANCE;
 
 	@Override
-	public @NotNull TooltipPositioner invarpaint$GetTooltipPositioner(){
+	public @NotNull ClientTooltipPositioner invarpaint$GetTooltipPositioner(){
 		return this.tooltipPositioner;
 	}
 
 	@Override
-	public void invarpaint$SetTooltipPositioner(@NotNull TooltipPositioner value){
+	public void invarpaint$SetTooltipPositioner(@NotNull ClientTooltipPositioner value){
 		this.tooltipPositioner = value;
 	}
 
@@ -33,14 +33,14 @@ implements IDrawContextDuck
 	@ModifyArg(
 		require=3,
 		method={
-			"drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;Ljava/util/Optional;IILnet/minecraft/util/Identifier;)V",
-			"drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
-			"drawOrderedTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
+			"setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;IILnet/minecraft/resources/Identifier;)V",
+			"setComponentTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/resources/Identifier;)V",
+			"setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/resources/Identifier;)V",
 		},
 		index=4,
-		at=@At(value="INVOKE", target="net/minecraft/client/gui/DrawContext.drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;Lnet/minecraft/util/Identifier;Z)V")
+		at=@At(value="INVOKE", target="net/minecraft/client/gui/GuiGraphicsExtractor.setTooltipForNextFrameInternal(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;Z)V")
 	)
-	private TooltipPositioner UseCustomPositioner(TooltipPositioner original){
+	private ClientTooltipPositioner UseCustomPositioner(ClientTooltipPositioner original){
 		return this.tooltipPositioner;
 	}
 

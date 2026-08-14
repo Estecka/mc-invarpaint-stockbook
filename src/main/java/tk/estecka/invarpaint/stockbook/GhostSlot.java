@@ -1,8 +1,8 @@
 package tk.estecka.invarpaint.stockbook;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Slot for displaying placeholder items behind otherwise empty slots.
@@ -10,27 +10,27 @@ import net.minecraft.item.ItemStack;
 public class GhostSlot
 extends MovableSlot
 {
-	public GhostSlot(Inventory inv, int index, int x, int y){
+	public GhostSlot(Container inv, int index, int x, int y){
 		super(inv, index, x, y);
 	}
 
 	@Override
-	public boolean canTakeItems(PlayerEntity player){
+	public boolean mayPickup(Player player){
 		return false;
 	}
 
 	@Override
-	public boolean canInsert(ItemStack other){
+	public boolean mayPlace(ItemStack other){
 		return false;
 	}
 
 	@Override
-	public boolean isEnabled(){
-		return super.isEnabled() && !this.getStack().isEmpty();
+	public boolean isActive(){
+		return super.isActive() && !this.getItem().isEmpty();
 	}
 
 	@Override
-	public int getMaxItemCount() {
+	public int getMaxStackSize() {
 		return 1;
 	}
 }

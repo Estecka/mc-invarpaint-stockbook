@@ -2,20 +2,20 @@ package tk.estecka.invarpaint.stockbook;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.ScreenHandler;
 import fr.estecka.invarpaint.api.PaintStackUtil;
 
 
 public class StockbookInventory
-implements Inventory
+implements Container
 {
 	public final GhostView ghostView = new GhostView();
 	private final ItemStack container;
@@ -33,7 +33,7 @@ implements Inventory
 	 */
 	private final List<@NotNull PaintingEntry> layout = new ArrayList<>();
 
-	public @Nullable ScreenHandler handler;
+	public @Nullable AbstractContainerMenu handler;
 
 	public StockbookInventory(ItemStack container){
 		this.container = container;
@@ -47,7 +47,7 @@ implements Inventory
 		PaintingEntry variant = null;
 
 		var variantEntry = PaintStackUtil.GetVariantEntry(stack);
-		if (stack.isOf(Items.PAINTING) && variantEntry!=null)
+		if (stack.is(Items.PAINTING) && variantEntry!=null)
 			variant = new PaintingEntry(variantEntry);
 
 		return variant;
@@ -66,7 +66,7 @@ implements Inventory
 	}
 
 	@Override
-	public int size(){
+	public int getContainerSize(){
 		return this.layout.size();
 	}
 
@@ -76,13 +76,13 @@ implements Inventory
 	}
 
 	@Override
-	public void clear(){
+	public void clearContent(){
 		this.content.clear();
 		this.layout.clear();
 	}
 
 	@Override
-	public int getMaxCountPerStack(){
+	public int getMaxStackSize(){
 		return Integer.MAX_VALUE;
 	}
 
@@ -91,7 +91,7 @@ implements Inventory
 	}
 
 	@Override
-	public ItemStack getStack(int i){
+	public ItemStack getItem(int i){
 		if (i >= layout.size() || layout.get(i) == null)
 			return ItemStack.EMPTY;
 		else
@@ -117,24 +117,24 @@ implements Inventory
 	}
 	
 	@Override
-	public ItemStack removeStack(int i){
+	public ItemStack removeItemNoUpdate(int i){
 		PaintingEntry variant  = layout.get(i);
 
 		ItemStack stack = PaintStackUtil.CreateVariant(variant.entry());
 		stack.setCount(content.getInt(variant));
 		this.SetStack(variant, 0);
-		this.markDirty();
+		this.setChanged();
 		return stack;
 	}
 	
 	@Override
-	public ItemStack removeStack(int i, int amount){
+	public ItemStack removeItem(int i, int amount){
 		PaintingEntry variant = layout.get(i);
 		int stored = content.getInt(variant);
 		amount = Math.min(amount, stored);
 		
 		this.SetStack(variant, stored - amount);
-		this.markDirty();
+		this.setChanged();
 
 		ItemStack stack = PaintStackUtil.CreateVariant(variant.entry());
 		stack.setCount(amount);
@@ -147,19 +147,19 @@ implements Inventory
 	 * still combine the incoming stack with another stack in a different slot.
 	 */
 	@Override
-	public void setStack(int i, ItemStack stack){
+	public void setItem(int i, ItemStack stack){
 		@Nullable PaintingEntry neoVariant = Reduce(stack);
 		PaintingEntry oldVariant = this.layout.get(i);
 		if (!stack.isEmpty() && neoVariant == null)
 			throw new IllegalArgumentException("An invalid item has been inserted into a stockbook: "+stack.toString());
 
 		if (!oldVariant.equals(neoVariant))
-			stack.increment(this.content.getInt(oldVariant));
+			stack.grow(this.content.getInt(oldVariant));
 
 		this.SetStack(oldVariant, 0);
 		if (neoVariant != null)
 			this.SetStack(neoVariant, stack.getCount());
-		this.markDirty();
+		this.setChanged();
 	}
 
 	/**
@@ -170,7 +170,7 @@ implements Inventory
 		if (variantId == null)
 			return incoming;
 
-		int max = Items.PAINTING.getMaxCount();
+		int max = Items.PAINTING.getDefaultMaxStackSize();
 		int stored = this.content.getInt(variantId);
 		if (stored >= max)
 			return incoming;
@@ -183,18 +183,18 @@ implements Inventory
 		else {
 			this.SetStack(variantId, max);
 			incoming.copy();
-			incoming.decrement(max - stored);
+			incoming.shrink(max - stored);
 		}
 
-		this.markDirty();
+		this.setChanged();
 		return incoming;
 	}
 
 	@Override
-	public void markDirty(){
+	public void setChanged(){
 		this.container.set(VariantCollectionComponent.TYPE, new VariantCollectionComponent(this.content));
 		if (handler != null)
-			handler.onContentChanged(this);
+			handler.slotsChanged(this);
 	}
 
 	/**
@@ -205,15 +205,15 @@ implements Inventory
 	 * is identical should still be considered different !
 	 */
 	@Override
-	public boolean canPlayerUse(PlayerEntity player){
-		Inventory inv = player.getInventory();
+	public boolean stillValid(Player player){
+		Container inv = player.getInventory();
 
 		if (this.container.isEmpty())
 			return false;
-		if (player.currentScreenHandler.getCursorStack() == this.container)
+		if (player.containerMenu.getCarried() == this.container)
 			return true;
-		else for (int i=0; i<inv.size(); ++i) {
-			if (inv.getStack(i) == this.container)
+		else for (int i=0; i<inv.getContainerSize(); ++i) {
+			if (inv.getItem(i) == this.container)
 				return true;
 		}
 
@@ -221,7 +221,7 @@ implements Inventory
 	}
 
 	@Override
-	public boolean isValid(int slot, ItemStack stack){
+	public boolean canPlaceItem(int slot, ItemStack stack){
 		PaintingEntry incoming = Reduce(stack);
 		PaintingEntry acceptable = layout.get(slot);
 		return incoming != null && (acceptable == null || incoming.equals(acceptable));
@@ -238,37 +238,37 @@ implements Inventory
 	}
 
 	public class GhostView
-	implements Inventory
+	implements Container
 	{
 		private final StockbookInventory parent = StockbookInventory.this;
 
-		public int size(){
-			return parent.size();
+		public int getContainerSize(){
+			return parent.getContainerSize();
 		}
-		public boolean isValid(int i, ItemStack stack){
-			return parent.isValid(i, stack);
+		public boolean canPlaceItem(int i, ItemStack stack){
+			return parent.canPlaceItem(i, stack);
 		}
-		public boolean canPlayerUse(PlayerEntity player){
-			return parent.canPlayerUse(player);
+		public boolean stillValid(Player player){
+			return parent.stillValid(player);
 		}
 		
-		public int getMaxCountPerStack(){
+		public int getMaxStackSize(){
 			return 1;
 		}
 
-		public ItemStack getStack(int i){
+		public ItemStack getItem(int i){
 			if (parent.isGhost(i))
 				return PaintStackUtil.CreateVariant(parent.GetVariant(i).entry());
 			else
 				return ItemStack.EMPTY;
 		}
 
-		public void setStack(int i, ItemStack stack){}
-		public void markDirty(){}
-		public void clear(){}
+		public void setItem(int i, ItemStack stack){}
+		public void setChanged(){}
+		public void clearContent(){}
 		public boolean isEmpty(){ return true; }
-		public boolean canTransferTo(Inventory hopper, int slot, ItemStack stack){ return false; }
-		public ItemStack removeStack(int index){ return ItemStack.EMPTY; }
-		public ItemStack removeStack(int index, int amount){ return ItemStack.EMPTY; }
+		public boolean canTakeItem(Container hopper, int slot, ItemStack stack){ return false; }
+		public ItemStack removeItemNoUpdate(int index){ return ItemStack.EMPTY; }
+		public ItemStack removeItem(int index, int amount){ return ItemStack.EMPTY; }
 	}
 }

@@ -2,13 +2,13 @@ package tk.estecka.invarpaint.stockbook;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 
 public class VariableSizeInventory
-implements Inventory
+implements Container
 {
 	private final List<ItemStack> content =  new ArrayList<>();
 
@@ -16,7 +16,7 @@ implements Inventory
 	}
 
 	@Override
-	public int size(){
+	public int getContainerSize(){
 		return this.content.size();
 	}
 
@@ -30,12 +30,12 @@ implements Inventory
 	}
 
 	@Override
-	public ItemStack getStack(int i){
+	public ItemStack getItem(int i){
 		return i < content.size() ? content.get(i) : ItemStack.EMPTY;
 	}
 
 	@Override
-	public void setStack(int i, ItemStack stack){
+	public void setItem(int i, ItemStack stack){
 		while (content.size() <= i)
 			this.content.add(ItemStack.EMPTY);
 
@@ -43,7 +43,7 @@ implements Inventory
 	}
 
 	@Override
-	public ItemStack removeStack(int i){
+	public ItemStack removeItemNoUpdate(int i){
 		ItemStack r = ItemStack.EMPTY;
 		if (i < content.size()) {
 			r = content.get(i);
@@ -53,13 +53,13 @@ implements Inventory
 	}
 
 	@Override
-	public ItemStack removeStack(int i, int amount){
+	public ItemStack removeItem(int i, int amount){
 		ItemStack r = ItemStack.EMPTY;
 
 		if (i < content.size()) {
 			ItemStack original = content.get(i);
 			r = original.copyWithCount(amount);
-			original.decrement(amount);
+			original.shrink(amount);
 			content.set(i, original);
 		}
 
@@ -67,16 +67,16 @@ implements Inventory
 	}
 
 	@Override
-	public void clear(){
+	public void clearContent(){
 		this.content.clear();
 	}
 
 	@Override
-	public void markDirty(){
+	public void setChanged(){
 	}
 
 	@Override
-	public boolean canPlayerUse(PlayerEntity player){
+	public boolean stillValid(Player player){
 		return true;
 	}
 }

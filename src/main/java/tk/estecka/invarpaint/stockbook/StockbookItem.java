@@ -3,82 +3,83 @@ package tk.estecka.invarpaint.stockbook;
 import java.util.function.Consumer;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.decoration.painting.PaintingVariant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Rarity;
-import net.minecraft.world.World;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTabOutput;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.decoration.painting.PaintingVariant;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.Level;
+import tk.estecka.invarpaint.stockbook.mixin.IItemsMixin;
 
 public class StockbookItem
 extends Item
 {
-	static public final Identifier ID = Identifier.of("invarpaint", "stockbook");
-	static public final Item ITEM = Items.register(RegistryKey.of(RegistryKeys.ITEM, ID), StockbookItem::new, new Item.Settings().maxCount(1));
+	static public final Identifier ID = Identifier.fromNamespaceAndPath("invarpaint", "stockbook");
+	static public final Item ITEM = IItemsMixin.callRegisterItem(ResourceKey.create(Registries.ITEM, ID), StockbookItem::new, new Item.Properties().stacksTo(1));
 
 	static public void Register() {
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(StockbookItem::CreativeInventory);
+		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(StockbookItem::CreativeInventory);
 	}
 
-	static private void CreativeInventory(FabricItemGroupEntries entries){
-		entries.addAfter(Items.WRITABLE_BOOK, ITEM);
+	static private void CreativeInventory(FabricCreativeModeTabOutput entries){
+		entries.insertAfter(Items.WRITABLE_BOOK, ITEM);
 
-		final var registry = entries.getContext().lookup().getOptional(RegistryKeys.PAINTING_VARIANT);
+		final var registry = entries.getContext().holders().lookup(Registries.PAINTING_VARIANT);
 		if (!registry.isPresent())
 			return;
 
 		ItemStack fullBook = new ItemStack(ITEM);
 
 		Object2IntMap<PaintingEntry> everything = new Object2IntOpenHashMap<>();
-		for (RegistryEntry<PaintingVariant> entry : registry.get().streamEntries().toList())
+		for (Holder<PaintingVariant> entry : registry.get().listElements().toList())
 			everything.put(new PaintingEntry(entry), 1);
 
 		fullBook.set(VariantCollectionComponent.TYPE, new VariantCollectionComponent(everything));
-		fullBook.set(DataComponentTypes.ITEM_NAME, Text.translatable("item.invarpaint.stockbook.name.complete"));
-		fullBook.set(DataComponentTypes.RARITY, Rarity.EPIC);
-		fullBook.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
-		entries.addAfter(ITEM, fullBook);
+		fullBook.set(DataComponents.ITEM_NAME, Component.translatable("item.invarpaint.stockbook.name.complete"));
+		fullBook.set(DataComponents.RARITY, Rarity.EPIC);
+		fullBook.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+		entries.insertAfter(ITEM, fullBook);
 	}
 
 
-	public StockbookItem(Item.Settings settings){
+	public StockbookItem(Item.Properties settings){
 		super(settings);
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity player, Hand hand){
-		ItemStack stack = player.getStackInHand(hand);
+	public InteractionResult use(Level world, Player player, InteractionHand hand){
+		ItemStack stack = player.getItemInHand(hand);
 
 		// Check might superfluous, especially if stockboocks are to become dyable.
-		if (stack.isOf(ITEM)){
-			player.playSound(SoundEvents.ITEM_BOOK_PAGE_TURN, 1.0F, 1.0F);
-			player.openHandledScreen(StockbookServerHandler.GetFactory(stack));
-			return ActionResult.SUCCESS;
+		if (stack.is(ITEM)){
+			player.playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.0F);
+			player.openMenu(StockbookServerHandler.GetFactory(stack));
+			return InteractionResult.SUCCESS;
 		}
 		else
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> tooltip, TooltipType type){
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> tooltip, TooltipFlag type){
 		VariantCollectionComponent component = stack.get(VariantCollectionComponent.TYPE);
-		if (component == null || component.content.isEmpty() || !displayComponent.shouldDisplay(VariantCollectionComponent.TYPE))
+		if (component == null || component.content.isEmpty() || !displayComponent.shows(VariantCollectionComponent.TYPE))
 			return;
 
 		int stored=0, found=0;
@@ -87,6 +88,6 @@ extends Item
 			stored += (entry.getValue() > 0) ? 1 : 0;
 		}
 
-		tooltip.accept(Text.translatable("item.invarpaint.stockbook.tooltip.content", stored, found).formatted(Formatting.GRAY));
+		tooltip.accept(Component.translatable("item.invarpaint.stockbook.tooltip.content", stored, found).withStyle(ChatFormatting.GRAY));
 	}
 }

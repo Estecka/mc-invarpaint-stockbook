@@ -2,30 +2,30 @@ package tk.estecka.invarpaint.stockbook;
 
 import org.jetbrains.annotations.NotNull;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.decoration.painting.PaintingVariant;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.decoration.painting.PaintingVariant;
 
 /**
- * Just some wrapper  for {@code RegistryEntry<PaintingVariant>}, to ease having
- * to carry around that  cumbersome class name  in every function parameter  and
- * return types.
+ * Just  some  wrapper  for {@code Holder<PaintingVariant>}, to  ease  having to
+ *carry around that cumbersome class name in every function parameter and return
+ * types.
  */
 public class PaintingEntry
 {
-	static public final Codec<PaintingEntry> CODEC = PaintingVariant.ENTRY_CODEC.xmap(PaintingEntry::new, PaintingEntry::entry);
+	static public final Codec<PaintingEntry> CODEC = PaintingVariant.CODEC.xmap(PaintingEntry::new, PaintingEntry::entry);
 
-	public final RegistryEntry<PaintingVariant> entry;
+	public final Holder<PaintingVariant> entry;
 	public final PaintingVariant value;
 	public final Identifier id;
 
-	public PaintingEntry(@NotNull RegistryEntry<PaintingVariant> entry){
+	public PaintingEntry(@NotNull Holder<PaintingVariant> entry){
 		this.entry = entry;
 		this.value = entry.value();
-		this.id = entry.getKey().get().getValue();
+		this.id = entry.unwrapKey().get().identifier();
 	}
 
-	public RegistryEntry<PaintingVariant> entry(){ return this.entry; }
+	public Holder<PaintingVariant> entry(){ return this.entry; }
 	public PaintingVariant value(){ return this.value; }
 	public Identifier id(){ return this.id; }
 
@@ -44,6 +44,6 @@ public class PaintingEntry
 
 	@Override
 	public String toString() {
-		return entry.getIdAsString();
+		return entry.getRegisteredName();
 	}
 }

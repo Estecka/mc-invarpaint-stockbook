@@ -1,7 +1,7 @@
 package tk.estecka.invarpaint.stockbook;
 
-import net.minecraft.inventory.Inventory;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
 import tk.estecka.invarpaint.stockbook.mixin.ISlotMixin;
 
 public class MovableSlot
@@ -9,7 +9,7 @@ extends Slot
 {
 	private boolean isVisible = true;
 	
-	public MovableSlot(Inventory inventory, int index, int x, int y) {
+	public MovableSlot(Container inventory, int index, int x, int y) {
 		super(inventory, index, x, y);
 	}
 
@@ -18,5 +18,5 @@ extends Slot
 	public void SetVisible(boolean b){ this.isVisible = b; }
 
 	@Override
-	public boolean isEnabled(){ return this.isVisible; }
+	public boolean isActive(){ return this.isVisible; }
 }

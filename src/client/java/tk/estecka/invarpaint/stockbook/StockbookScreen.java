@@ -9,61 +9,62 @@ import org.joml.Vector2ic;
 import org.lwjgl.glfw.GLFW;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.tooltip.TooltipPositioner;
-import net.minecraft.client.gui.widget.CyclingButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.math.Rect2i;
-import net.minecraft.entity.decoration.painting.PaintingVariant;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.decoration.painting.PaintingVariant;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import fr.estecka.invarpaint.api.PaintStackUtil;
 
 
 @Environment(EnvType.CLIENT)
 public class StockbookScreen
-extends HandledScreen<AStockbookHandler>
-implements TooltipPositioner
+extends AbstractContainerScreen<AStockbookHandler>
+implements ClientTooltipPositioner
 {
-	static private final Identifier BACKGROUND = Identifier.of("invarpaint", "stockbook/background");
-	static private final Identifier FULL_SLOT  = Identifier.of("invarpaint", "stockbook/full_slot" );
-	static private final Identifier STOCK_SLOT = Identifier.of("invarpaint", "stockbook/stock"     );
-	static private final Identifier SCROLLBAR  = Identifier.of("invarpaint", "stockbook/scrollbar" );
+	static private final Identifier BACKGROUND = Identifier.fromNamespaceAndPath("invarpaint", "stockbook/background");
+	static private final Identifier FULL_SLOT  = Identifier.fromNamespaceAndPath("invarpaint", "stockbook/full_slot" );
+	static private final Identifier STOCK_SLOT = Identifier.fromNamespaceAndPath("invarpaint", "stockbook/stock"     );
+	static private final Identifier SCROLLBAR  = Identifier.fromNamespaceAndPath("invarpaint", "stockbook/scrollbar" );
 
-	static private final ButtonTextures FILTER_TEXTURES = new ButtonTextures(
-		Identifier.of("invarpaint", "stockbook/filter_enabled"),
-		Identifier.of("invarpaint", "stockbook/filter_disabled"),
-		Identifier.of("invarpaint", "stockbook/filter_enabled_highlighted"),
-		Identifier.of("invarpaint", "stockbook/filter_disabled_highlighted")
+	static private final WidgetSprites FILTER_TEXTURES = new WidgetSprites(
+		Identifier.fromNamespaceAndPath("invarpaint", "stockbook/filter_enabled"),
+		Identifier.fromNamespaceAndPath("invarpaint", "stockbook/filter_disabled"),
+		Identifier.fromNamespaceAndPath("invarpaint", "stockbook/filter_enabled_highlighted"),
+		Identifier.fromNamespaceAndPath("invarpaint", "stockbook/filter_disabled_highlighted")
 	);
-	static private final Tooltip FILTER_TOOLTIP_ON  = Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.stored"));
-	static private final Tooltip FILTER_TOOLTIP_OFF = Tooltip.of(Text.translatable("gui.invapraint.stockbook.filter.discovered"));
+	static private final Tooltip FILTER_TOOLTIP_ON  = Tooltip.create(Component.translatable("gui.invapraint.stockbook.filter.stored"));
+	static private final Tooltip FILTER_TOOLTIP_OFF = Tooltip.create(Component.translatable("gui.invapraint.stockbook.filter.discovered"));
 
 	// Slot count
 	static public final int GRID_W=5, GRID_H=4;
 	static public final int GRID_SLOT_COUNT = GRID_W * GRID_H;
 
 	// Pixel measurements
+	static private final int BG_WIDTH=320, BG_HEIGHT=230;
 	static private final int GRID_X=15, GRID_Y=31;
 	static private final int SLOT_W=26, SLOT_H=26;
 	static private final int PLAYER_X=10, PLAYER_Y=148;
@@ -80,17 +81,17 @@ implements TooltipPositioner
 	protected final Registry<PaintingVariant> paintingRegistry;
 
 	// Widgets
-	private final TextFieldWidget searchBox = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, SEARCH_W, SEARCH_H, Text.literal("Search"));
+	private final EditBox searchBox = new EditBox(Minecraft.getInstance().font, 0, 0, SEARCH_W, SEARCH_H, Component.literal("Search"));
 	private final List<StockbookSlot> searchResults = new ArrayList<>();
 	private final PaintingPreviewWidget preview = new PaintingPreviewWidget(PREVIEW_SIZE);
-	private final CyclingButtonWidget<Boolean> filterButton = CyclingButtonWidget.onOffBuilder(false)
-		.icon( (button,value)->FILTER_TEXTURES.get(value, button.isSelected()) )
-		.labelType(CyclingButtonWidget.LabelType.HIDE)
-		.tooltip(enabled -> enabled ? FILTER_TOOLTIP_ON : FILTER_TOOLTIP_OFF)
-		.build(x, y, FILTER_W, FILTER_H, ScreenTexts.EMPTY, (button,value)->this.UpdateSearchResults())
+	private final CycleButton<Boolean> filterButton = CycleButton.onOffBuilder(false)
+		.withSprite( (button,value)->FILTER_TEXTURES.get(value, button.isHoveredOrFocused()) )
+		.displayState(CycleButton.DisplayState.HIDE)
+		.withTooltip(enabled -> enabled ? FILTER_TOOLTIP_ON : FILTER_TOOLTIP_OFF)
+		.create(leftPos, topPos, FILTER_W, FILTER_H, CommonComponents.EMPTY, (button,value)->this.UpdateSearchResults())
 		;
 	{
-		searchBox.setPlaceholder(Text.translatable("gui.invarpaint.stockbook.search").formatted(Formatting.ITALIC, Formatting.GRAY));
+		searchBox.setHint(Component.translatable("gui.invarpaint.stockbook.search").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
 	}
 
 	// The amount of slots in the book, the last time the layout was updated.
@@ -109,16 +110,16 @@ implements TooltipPositioner
 	private boolean isScrolling = false;
 
 	static public void Register(){
-		HandledScreens.<AStockbookHandler,StockbookScreen>register(AStockbookHandler.TYPE, StockbookScreen::new);
+		MenuScreens.<AStockbookHandler,StockbookScreen>register(AStockbookHandler.TYPE, StockbookScreen::new);
 		AStockbookHandler.clientFactory = StockbookClientHandler::new;
 	}
 
-	public StockbookScreen(StockbookClientHandler handler, PlayerInventory player, Text title){
+	public StockbookScreen(StockbookClientHandler handler, Inventory player, Component title){
 		this((AStockbookHandler)handler, player, title);
 	}
-	private StockbookScreen(AStockbookHandler handler, PlayerInventory player, Text title){
-		super(handler, player, title);
-		this.paintingRegistry = player.player.getEntityWorld().getRegistryManager().getOrThrow(RegistryKeys.PAINTING_VARIANT);
+	private StockbookScreen(AStockbookHandler handler, Inventory player, Component title){
+		super(handler, player, title, BG_WIDTH, BG_HEIGHT);
+		this.paintingRegistry = player.player.level().registryAccess().lookupOrThrow(Registries.PAINTING_VARIANT);
 		if (handler instanceof StockbookClientHandler clientHandler)
 			this.handler = clientHandler;
 		else
@@ -132,19 +133,17 @@ implements TooltipPositioner
 
 	@Override
 	protected void init(){
-		this.backgroundWidth  = 320;
-		this.backgroundHeight = 230;
 		super.init();
 
-		searchBox.setX(this.x + SEARCH_X);
-		searchBox.setY(this.y + SEARCH_Y);
-		this.addDrawableChild(searchBox);
+		searchBox.setX(this.leftPos + SEARCH_X);
+		searchBox.setY(this.topPos + SEARCH_Y);
+		this.addRenderableWidget(searchBox);
 
-		preview.SetPos(this.x+PREVIEW_X, this.y+PREVIEW_Y);
-		this.addDrawable(this.preview);
+		preview.SetPos(this.leftPos+PREVIEW_X, this.topPos+PREVIEW_Y);
+		this.addRenderableOnly(this.preview);
 
-		filterButton.setPosition(this.x+FILTER_X, this.y+FILTER_Y);
-		this.addDrawableChild(filterButton);
+		filterButton.setPosition(this.leftPos+FILTER_X, this.topPos+FILTER_Y);
+		this.addRenderableWidget(filterButton);
 
 		this.UpdatePlayerSlots();
 		this.UpdateSearchResults();
@@ -183,10 +182,10 @@ implements TooltipPositioner
 	}
 
 	private boolean MatchesSearch(StockbookSlot slot){
-		if (filterButton.getValue() && slot.getStack().isEmpty())
+		if (filterButton.getValue() && slot.getItem().isEmpty())
 			return false;
 
-		if (searchBox.getText().isBlank())
+		if (searchBox.getValue().isBlank())
 			return true;
 
 		final Language lang = Language.getInstance();
@@ -195,15 +194,15 @@ implements TooltipPositioner
 
 		String name=null, author=null;
 		if (entry != null){
-			name   = lang.get(entry.id.toTranslationKey("painting", "title" ), null);
-			author = lang.get(entry.id.toTranslationKey("painting", "author"), null);
+			name   = lang.getOrDefault(entry.id.toLanguageKey("painting", "title" ), null);
+			author = lang.getOrDefault(entry.id.toLanguageKey("painting", "author"), null);
 		}
 
 		String size="0x0";
 		if (variant != null)
 			size = String.format("%dx%d", variant.width(), variant.height());
 
-		String query = searchBox.getText().toLowerCase().trim();
+		String query = searchBox.getValue().toLowerCase().trim();
 		return entry.toString().contains(query)
 		    || size.contains(query)
 		    || (name   != null && name  .toLowerCase().contains(query))
@@ -230,7 +229,7 @@ implements TooltipPositioner
 	}
 
 	private void	UpdateScrollbar(){
-		this.linesScrolled = MathHelper.clamp(linesScrolled, 0, linesScrolledMax);
+		this.linesScrolled = Mth.clamp(linesScrolled, 0, linesScrolledMax);
 
 		int height = RAIL_H * GRID_H / (linesScrolledMax + GRID_H);
 		height =  Math.max(height, SCROLLBAR_MIN_H);
@@ -238,8 +237,8 @@ implements TooltipPositioner
 		if (linesScrolledMax != 0)
 			offsetY /= linesScrolledMax;
 
-		this.scrollbar.setX(this.x+RAIL_X);
-		this.scrollbar.setY(this.y+RAIL_Y+offsetY);
+		this.scrollbar.setX(this.leftPos+RAIL_X);
+		this.scrollbar.setY(this.topPos+RAIL_Y+offsetY);
 		this.scrollbar.setWidth(RAIL_W);
 		this.scrollbar.setHeight(height);
 
@@ -284,7 +283,7 @@ implements TooltipPositioner
 		index = searchResults.indexOf(slot);
 
 		int line = index / GRID_W;
-		this.linesScrolled = MathHelper.clamp(linesScrolled, line+1-GRID_H, line);
+		this.linesScrolled = Mth.clamp(linesScrolled, line+1-GRID_H, line);
 		this.UpdateScrollability();
 
 		this.preview.SetVariant(variant.value);
@@ -297,7 +296,7 @@ implements TooltipPositioner
 /******************************************************************************/
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta){
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta){
 		if (this.knownSlots != handler.bookSlots.size()){
 			this.knownSlots = handler.bookSlots.size();
 			this.UpdateSearchResults();
@@ -307,17 +306,16 @@ implements TooltipPositioner
 			handler.requestedFocus = null;
 
 		this.renderBackground(context, mouseX, mouseY, delta);
-		super.render(context, mouseX, mouseY, delta);
-		this.drawMouseoverTooltip(context, mouseX, mouseY);
+		super.extractRenderState(context, mouseX, mouseY, delta);
+		this.extractTooltip(context, mouseX, mouseY);
 	}
 
-	@Override
-	protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY){
-		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, BACKGROUND, this.x, this.y, this.backgroundWidth, this.backgroundHeight);
+	public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta){
+		context.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
 		this.RenderScrollbar(context);
 
 		for (StockbookSlot slot : searchResults)
-		if  (slot.isEnabled() && slot != highlighted)
+		if  (slot.isActive() && slot != highlighted)
 			this.DrawSlotBackground(context, slot, delta);
 
 		if (this.highlighted != null)
@@ -326,20 +324,20 @@ implements TooltipPositioner
 
 	// Intentionally skips title draw from super.
 	@Override
-	protected void drawForeground(DrawContext context, int mouseX, int moueY){
+	protected void extractLabels(GuiGraphicsExtractor context, int mouseX, int moueY){
 		int lockId = handler.containerSlot.get();
 		if (0 <= lockId && lockId < handler.slots.size()){
 			Slot slot = handler.getSlot(lockId);
-			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
+			context.blitSprite(RenderPipelines.GUI_TEXTURED, STOCK_SLOT, slot.x-2, slot.y-2, 20, 20);
 		}
 	}
 
-	private void DrawSlotBackground(DrawContext context, Slot slot, float delta){
-		if (!slot.hasStack())
+	private void DrawSlotBackground(GuiGraphicsExtractor context, Slot slot, float delta){
+		if (!slot.hasItem())
 			return;
 
-		int drawX = this.x+slot.x-5;
-		int drawY = this.y+slot.y-5;
+		int drawX = this.leftPos+slot.x-5;
+		int drawY = this.topPos+slot.y-5;
 		int drawSize = 26;
 
 		if (this.highlighted == slot){
@@ -353,25 +351,25 @@ implements TooltipPositioner
 				this.highlighted = null;
 		}
 
-		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, FULL_SLOT, drawX, drawY, drawSize, drawSize);
+		context.blitSprite(RenderPipelines.GUI_TEXTURED, FULL_SLOT, drawX, drawY, drawSize, drawSize);
 	}
 
 	@Override
-	protected void	drawMouseoverTooltip(DrawContext context, int mouseX, int mouseY){
+	protected void extractTooltip(GuiGraphicsExtractor context, int mouseX, int mouseY){
 		var contextpp = IDrawContextDuck.Of(context);
 
-		if (mouseY < (this.y + PREVIEW_Y + PREVIEW_SIZE))
+		if (mouseY < (this.topPos + PREVIEW_Y + PREVIEW_SIZE))
 			contextpp.invarpaint$SetTooltipPositioner(this);
 
-		super.drawMouseoverTooltip(context, mouseX, mouseY);
-		contextpp.invarpaint$SetTooltipPositioner(HoveredTooltipPositioner.INSTANCE);
+		super.extractTooltip(context, mouseX, mouseY);
+		contextpp.invarpaint$SetTooltipPositioner(DefaultTooltipPositioner.INSTANCE);
 	}
 
 	// Tooltip Positioner
 	@Override
-	public Vector2ic getPosition(int screenWidth, int screenHeight, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight){
+	public Vector2ic positionTooltip(int screenWidth, int screenHeight, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight){
 		Vector2i pos = new Vector2i(
-			this.x + TOOLTIP_X_MIN + TOOLTIP_PADDING,
+			this.leftPos + TOOLTIP_X_MIN + TOOLTIP_PADDING,
 			mouseY + 16
 		);
 		int overflow;
@@ -381,7 +379,7 @@ implements TooltipPositioner
 		if (overflow > 0)
 			pos.x += overflow;
 
-		overflow = (pos.x + tooltipWidth) - (this.x + TOOLTIP_X_MAX - TOOLTIP_PADDING);
+		overflow = (pos.x + tooltipWidth) - (this.leftPos + TOOLTIP_X_MAX - TOOLTIP_PADDING);
 		if (overflow > 0)
 			pos.x -= overflow;
 
@@ -400,19 +398,19 @@ implements TooltipPositioner
 	}
 
 	@Override
-	protected List<Text> getTooltipFromItem(ItemStack stack) {
-		RegistryEntry<PaintingVariant> variantEntry = PaintStackUtil.GetVariantEntry(stack);
+	protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
+		Holder<PaintingVariant> variantEntry = PaintStackUtil.GetVariantEntry(stack);
 		if (variantEntry != null)
 			this.preview.SetVariant(variantEntry.value());
 
-		return super.getTooltipFromItem(stack);
+		return super.getTooltipFromContainerItem(stack);
 	}
 
-	private void	RenderScrollbar(DrawContext context){
+	private void RenderScrollbar(GuiGraphicsExtractor context){
 		if (linesScrolledMax == 0)
 			return;
 
-		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
+		context.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLBAR, scrollbar.getX(), scrollbar.getY(), scrollbar.getWidth(), scrollbar.getHeight());
 	}
 
 
@@ -421,7 +419,7 @@ implements TooltipPositioner
 /******************************************************************************/
 
 	@Override
-	public boolean charTyped(CharInput charInput){
+	public boolean charTyped(CharacterEvent charInput){
 		boolean r = super.charTyped(charInput);
 
 		if (r && searchBox.isFocused())
@@ -431,8 +429,8 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean keyPressed(KeyInput keyInput){
-		int keyCode = keyInput.getKeycode();
+	public boolean keyPressed(KeyEvent keyInput){
+		int keyCode = keyInput.input();
 		if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
 			this.setFocused(searchBox);
 		else if (this.searchBox.isFocused()) {
@@ -454,19 +452,19 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean mouseClicked(Click click, boolean doubled){
+	public boolean mouseClicked(MouseButtonEvent click, boolean doubled){
 		double mouseX = click.x();
 		double mouseY = click.y();
 
 		this.setFocused(null);
 		if (click.button() == 0
-		 && mouseX >= (this.x+RAIL_X)
-		 && mouseX <  (this.x+RAIL_X+RAIL_W)
-		 && mouseY >= (this.y+RAIL_Y)
-		 && mouseY <  (this.y+RAIL_Y+RAIL_H)
+		 && mouseX >= (this.leftPos+RAIL_X)
+		 && mouseX <  (this.leftPos+RAIL_X+RAIL_W)
+		 && mouseY >= (this.topPos+RAIL_Y)
+		 && mouseY <  (this.topPos+RAIL_Y+RAIL_H)
 		) {
 			this.isScrolling = true;
-			this.linesScrolled = (int)Math.round( linesScrolledMax * (mouseY - this.y - RAIL_Y) / RAIL_H );
+			this.linesScrolled = (int)Math.round( linesScrolledMax * (mouseY - this.topPos - RAIL_Y) / RAIL_H );
 			this.UpdateScrollbar();
 			return true;
 		}
@@ -474,7 +472,7 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean mouseReleased(Click click){
+	public boolean mouseReleased(MouseButtonEvent click){
 		if (click.button() == 0)
 			this.isScrolling = false;
 
@@ -482,11 +480,11 @@ implements TooltipPositioner
 	}
 
 	@Override
-	public boolean mouseDragged(Click click, double deltaX, double deltaY){
+	public boolean mouseDragged(MouseButtonEvent click, double deltaX, double deltaY){
 		if (!this.isScrolling)
 			return super.mouseDragged(click, deltaX, deltaY);
 
-		this.linesScrolled = (int)Math.round( linesScrolledMax * (click.y() - this.y - RAIL_Y) / RAIL_H );
+		this.linesScrolled = (int)Math.round( linesScrolledMax * (click.y() - this.topPos - RAIL_Y) / RAIL_H );
 		this.UpdateScrollbar();
 		return true;
 	}
